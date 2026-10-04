@@ -39,8 +39,8 @@
         <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS766 (Universidad de Salamanca)</span></div>
         <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Spain / RedIRIS Provider</span></div>
         <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.9701, -5.6634</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±67.5 km</span></div>
-        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">2 Nodos</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±15.0 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
         <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.9701,-5.6634" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
@@ -48,7 +48,7 @@
     <script>
         const estLat = 40.970100;
         const estLon = -5.663400;
-        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":16.882,"max_radius_km":1688.2,"samples":5,"type":"local_vantage"},{"id":"TARGET-LOCATION","name":"Target Host Location","city":"Target","country":"","location":{"lat":40.9701,"lon":-5.6634},"min_rtt_ms":16.882,"max_radius_km":84.41000000000001,"samples":5,"type":"target_location"}];
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":15.397,"max_radius_km":1539.7,"samples":5,"type":"local_vantage"}];
         const reconData = {"ip":"212.128.131.17","hostname":"www.usal.es","asn":766,"as_org":"Universidad de Salamanca","country":"Spain","country_code":"ES","region":"Castille and León","city":"Salamanca","latitude":40.9701,"longitude":-5.6634,"isp":"RedIRIS Provider","is_cloud":false,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"RESIDENTIAL_OR_DIRECT","indicators":["PTR: www.usal.es"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 67.528000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 15.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 67.528000 * 1000
+            radius: 15.000000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles

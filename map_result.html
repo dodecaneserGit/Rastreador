@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador - Geolocalización de IP [9.9.9.9]</title>
+    <title>Rastreador - Geolocalización de IP [212.128.131.17]</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -34,22 +34,22 @@
 <body>
     <div class="dashboard-card">
         <div class="title">🎯 Rastreador IP Matrix</div>
-        <div class="badge badge-cloud">BGP_ANYCAST_EDGE</div>
-        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">9.9.9.9</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS19281 (Quad9)</span></div>
-        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">United States / Quad9</span></div>
-        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">48.3872, 6.1985</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±821.2 km</span></div>
-        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">5 Nodos</span></div>
-        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=48.3872,6.1985" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+        <div class="badge badge-direct">RESIDENTIAL_OR_DIRECT</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">212.128.131.17</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS766 (Universidad de Salamanca)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Spain / RedIRIS Provider</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.9701, -5.6634</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±58.5 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">2 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.9701,-5.6634" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
 
     <script>
-        const estLat = 48.387215;
-        const estLon = 6.198488;
-        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":7.566,"max_radius_km":756.6,"samples":5,"type":"local_vantage"},{"id":"BGP-ORIGIN","name":"BGP Origin Registry (Anycast Parent)","city":"Datacenter","country":"","location":{"lat":37.8806,"lon":-122.268},"min_rtt_ms":7.566,"max_radius_km":9300.40437690113,"samples":5,"type":"bgp_anchor"},{"id":"RIPE-PRB-53204","name":"RIPE Atlas Sonda #53204","city":"DE","country":"DE","location":{"lat":53.6195,"lon":9.9975},"min_rtt_ms":2.841292,"max_radius_km":284.1292,"samples":3,"type":"ripe_atlas_probe"},{"id":"RIPE-PRB-13855","name":"RIPE Atlas Sonda #13855","city":"CH","country":"CH","location":{"lat":47.4095,"lon":8.5495},"min_rtt_ms":1.491806,"max_radius_km":149.1806,"samples":3,"type":"ripe_atlas_probe"},{"id":"RIPE-PRB-1014525","name":"RIPE Atlas Sonda #1014525","city":"SI","country":"SI","location":{"lat":46.2895,"lon":15.3085},"min_rtt_ms":6.593519,"max_radius_km":659.3519,"samples":3,"type":"ripe_atlas_probe"}];
-        const reconData = {"ip":"9.9.9.9","hostname":"dns9.quad9.net","asn":19281,"as_org":"Quad9","country":"United States","country_code":"US","region":"California","city":"Berkeley","latitude":37.8806,"longitude":-122.268,"isp":"Quad9","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":true,"confidence":"BGP_ANYCAST_EDGE","indicators":["PTR: dns9.quad9.net","BGP Anycast detected: Quad9 Anycast DNS"]};
+        const estLat = 40.970100;
+        const estLon = -5.663400;
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":14.631,"max_radius_km":1463.1,"samples":5,"type":"local_vantage"},{"id":"TARGET-LOCATION","name":"Target Host Location","city":"Target","country":"","location":{"lat":40.9701,"lon":-5.6634},"min_rtt_ms":14.631,"max_radius_km":73.155,"samples":5,"type":"target_location"}];
+        const reconData = {"ip":"212.128.131.17","hostname":"www.usal.es","asn":766,"as_org":"Universidad de Salamanca","country":"Spain","country_code":"ES","region":"Castille and León","city":"Salamanca","latitude":40.9701,"longitude":-5.6634,"isp":"RedIRIS Provider","is_cloud":false,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"RESIDENTIAL_OR_DIRECT","indicators":["PTR: www.usal.es"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
         const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 821.214592.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 58.524000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 821.214592 * 1000
+            radius: 58.524000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles

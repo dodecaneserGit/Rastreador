@@ -31,7 +31,7 @@ func NewRIPEAtlasClient(apiKey string) *RIPEAtlasClient {
 	return &RIPEAtlasClient{
 		APIKey: apiKey,
 		HTTPClient: &http.Client{
-			Timeout: 20 * time.Second,
+			Timeout: 25 * time.Second,
 		},
 	}
 }
@@ -114,12 +114,11 @@ type ripeProbeDetail struct {
 // RunRIPEAtlasProbing orchestrates global probes using RIPE Atlas
 func (c *RIPEAtlasClient) RunRIPEAtlasProbing(ctx context.Context, targetIP string, probeCount int) ([]Landmark, error) {
 	if c.APIKey == "" {
-		// Attempt to fetch public existing measurements for this IP
 		return c.FetchPublicMeasurements(ctx, targetIP)
 	}
 
 	if probeCount <= 0 {
-		probeCount = 5
+		probeCount = 4
 	}
 
 	// 1. Create One-Off Ping Measurement
@@ -129,7 +128,7 @@ func (c *RIPEAtlasClient) RunRIPEAtlasProbing(ctx context.Context, targetIP stri
 				Type:        "ping",
 				AF:          4,
 				Target:      targetIP,
-				Description: "Rastreador IP Multilateration Measurement",
+				Description: "Rastreador Multilateration Probe",
 				Packets:     3,
 				IsOneOff:    true,
 			},
@@ -138,7 +137,7 @@ func (c *RIPEAtlasClient) RunRIPEAtlasProbing(ctx context.Context, targetIP stri
 			{
 				Requested: probeCount,
 				Type:      "area",
-				Value:     "WW", // Worldwide
+				Value:     "WW",
 			},
 		},
 	}
@@ -175,18 +174,28 @@ func (c *RIPEAtlasClient) RunRIPEAtlasProbing(ctx context.Context, targetIP stri
 
 	measurementID := createResp.Measurements[0]
 
-	// 2. Poll for results (RIPE one-off measurements take ~8-15 seconds to execute across probes)
+	// 2. Poll for results (give RIPE probes up to 18 seconds)
 	var results []ripeResultItem
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 7; i++ {
 		time.Sleep(3 * time.Second)
 		results, err = c.getMeasurementResults(ctx, measurementID)
-		if err == nil && len(results) >= 2 {
-			break
+		if err == nil && len(results) >= 1 {
+			// Check if at least one probe got a valid response (min > 0)
+			hasValid := false
+			for _, r := range results {
+				if r.Min > 0 || r.Avg > 0 {
+					hasValid = true
+					break
+				}
+			}
+			if hasValid {
+				break
+			}
 		}
 	}
 
 	if len(results) == 0 {
-		return nil, fmt.Errorf("timed out waiting for RIPE Atlas probe results")
+		return nil, fmt.Errorf("target host did not respond to ICMP probes or timed out")
 	}
 
 	// 3. Resolve Probe Coordinates and construct Landmarks
@@ -242,7 +251,6 @@ func (c *RIPEAtlasClient) FetchPublicMeasurements(ctx context.Context, targetIP 
 		return nil, fmt.Errorf("no public measurement records found for %s", targetIP)
 	}
 
-	// Fetch results of the latest public measurement
 	latestID := searchResp.Results[0].ID
 	results, err := c.getMeasurementResults(ctx, latestID)
 	if err != nil || len(results) == 0 {
@@ -279,7 +287,7 @@ func (c *RIPEAtlasClient) convertResultsToLandmarks(ctx context.Context, results
 
 			lm := Landmark{
 				ID:        fmt.Sprintf("RIPE-PRB-%d", prbID),
-				Name:      fmt.Sprintf("RIPE Atlas Sonda #%d", prbID),
+				Name:      fmt.Sprintf("RIPE Sonda #%d (%s)", prbID, probeDetail.CountryCode),
 				City:      probeDetail.CountryCode,
 				Country:   probeDetail.CountryCode,
 				Location:  Point{Lat: lat, Lon: lon},

@@ -32,7 +32,7 @@ func main() {
 	samplesFlag := flag.Int("samples", 5, "Number of probe samples per landmark")
 	l7URLFlag := flag.String("l7-url", "", "Optional HTTP/HTTPS endpoint on target for L4 vs L7 timing differential")
 	ripeKeyFlag := flag.String("ripe-key", "", "Optional RIPE Atlas API Key for distributed worldwide probing")
-	ripeProbesFlag := flag.Int("ripe-probes", 5, "Number of worldwide probes to request from RIPE Atlas")
+	ripeProbesFlag := flag.Int("ripe-probes", 4, "Number of worldwide probes to request from RIPE Atlas")
 	outJSONFlag := flag.String("out", "", "Output JSON report path")
 	mapHTMLFlag := flag.String("map", "map_result.html", "Output interactive HTML Leaflet map path")
 	openBrowserFlag := flag.Bool("open", true, "Automatically open the generated HTML map in default web browser")
@@ -92,11 +92,15 @@ func main() {
 				fmt.Printf("    • [✓] Recibidas %d respuestas de sondas RIPE Atlas en tiempo real.\n", len(ripeLandmarks))
 			}
 			landmarks = append(landmarks, ripeLandmarks...)
-			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
-			estPoint = multiSolverRes.EstimatedPoint
-			confidence = multiSolverRes.ConfidenceKm
+
+			// If no authoritative geolocation was available, solve via least-squares
+			if reconInfo.Latitude == 0 && reconInfo.Longitude == 0 {
+				multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
+				estPoint = multiSolverRes.EstimatedPoint
+				confidence = multiSolverRes.ConfidenceKm
+			}
 		} else if !*jsonOnlyFlag && err != nil {
-			fmt.Printf("    • [!] Nota RIPE Atlas: %v\n", err)
+			fmt.Printf("    • [!] Nota RIPE Atlas: %v (usando sondas locales y BGP)\n", err)
 		}
 	} else {
 		if !*jsonOnlyFlag {
