@@ -54,6 +54,9 @@ type ripeCreateResponse struct {
 	Measurements []int `json:"measurements"`
 	Error        struct {
 		Detail string `json:"detail"`
+		Errors []struct {
+			Detail string `json:"detail"`
+		} `json:"errors"`
 	} `json:"error"`
 }
 
@@ -128,7 +131,14 @@ func (c *RIPEAtlasClient) RunRIPEAtlasProbing(ctx context.Context, targetIP stri
 
 	var createResp ripeCreateResponse
 	if err := json.NewDecoder(resp.Body).Decode(&createResp); err != nil || len(createResp.Measurements) == 0 {
-		return nil, fmt.Errorf("RIPE Atlas API error: %s", createResp.Error.Detail)
+		detail := createResp.Error.Detail
+		if len(createResp.Error.Errors) > 0 && createResp.Error.Errors[0].Detail != "" {
+			detail = createResp.Error.Errors[0].Detail
+		}
+		if detail == "" {
+			detail = "error scheduling measurement in RIPE Atlas"
+		}
+		return nil, fmt.Errorf("%s", detail)
 	}
 
 	measurementID := createResp.Measurements[0]
