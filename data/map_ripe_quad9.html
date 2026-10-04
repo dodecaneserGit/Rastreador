@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreador - Geolocalización de IP [9.9.9.9]</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+        #map { height: 100vh; width: 100%; }
+        .dashboard-card {
+            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px);
+            padding: 20px; border-radius: 12px; border: 1px solid #334155;
+            max-width: 380px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        }
+        .title { font-size: 1.25rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.5px; }
+        .badge-vpn { background: #dc2626; color: #fff; }
+        .badge-cloud { background: #ea580c; color: #fff; }
+        .badge-direct { background: #16a34a; color: #fff; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.85rem; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        .stat-label { color: #94a3b8; }
+        .stat-val { font-weight: 600; color: #f8fafc; text-align: right; }
+        .gmaps-btn {
+            display: block; width: 100%; box-sizing: border-box; margin-top: 14px; padding: 10px 12px;
+            background: #0284c7; color: #fff; text-align: center; text-decoration: none;
+            border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;
+        }
+        .gmaps-btn:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <div class="title">🎯 Rastreador IP Matrix</div>
+        <div class="badge badge-cloud">BGP_ANYCAST_EDGE</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">9.9.9.9</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS19281 (Quad9)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">United States / Quad9</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">47.4065, 4.1684</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±744.4 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">5 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=47.4065,4.1684" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        const estLat = 47.406516;
+        const estLon = 4.168405;
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":7.322,"max_radius_km":732.2,"samples":5,"type":"local_vantage"},{"id":"BGP-ORIGIN","name":"BGP Origin Registry (Anycast Parent)","city":"Datacenter","country":"","location":{"lat":37.8806,"lon":-122.268},"min_rtt_ms":7.322,"max_radius_km":9300.40437690113,"samples":5,"type":"bgp_anchor"},{"id":"RIPE-PRB-62337","name":"RIPE Atlas Sonda #62337","city":"DE","country":"DE","location":{"lat":50.1305,"lon":8.5785},"min_rtt_ms":1.464065,"max_radius_km":146.4065,"samples":3,"type":"ripe_atlas_probe"},{"id":"RIPE-PRB-11451","name":"RIPE Atlas Sonda #11451","city":"CZ","country":"CZ","location":{"lat":50.0975,"lon":14.3495},"min_rtt_ms":8.18415,"max_radius_km":818.4150000000001,"samples":3,"type":"ripe_atlas_probe"},{"id":"RIPE-PRB-1009594","name":"RIPE Atlas Sonda #1009594","city":"FR","country":"FR","location":{"lat":50.6495,"lon":3.0715},"min_rtt_ms":5.677916,"max_radius_km":567.7916,"samples":3,"type":"ripe_atlas_probe"}];
+        const reconData = {"ip":"9.9.9.9","hostname":"dns9.quad9.net","asn":19281,"as_org":"Quad9","country":"United States","country_code":"US","region":"California","city":"Berkeley","latitude":37.8806,"longitude":-122.268,"isp":"Quad9","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":true,"confidence":"BGP_ANYCAST_EDGE","indicators":["PTR: dns9.quad9.net","BGP Anycast detected: Quad9 Anycast DNS"]};
+
+        // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
+        const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ',
+            maxZoom: 19
+        });
+
+        const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS',
+            maxZoom: 19
+        });
+
+        const topoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom',
+            maxZoom: 19
+        });
+
+        const map = L.map('map', {
+            center: [estLat, estLon],
+            zoom: 6,
+            layers: [streetMap]
+        });
+
+        const baseMaps = {
+            "🗺️ Mapa Urbano (Esri)": streetMap,
+            "🛰️ Satélite (Esri)": satelliteMap,
+            "🏔️ Topográfico (Esri)": topoMap
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+
+        // Target Marker
+        const targetIcon = L.divIcon({
+            className: 'target-marker',
+            html: '<div style="background-color:#ef4444;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 18px #ef4444;"></div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 744.445630.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .openPopup();
+
+        // Target Confidence Circle
+        L.circle([estLat, estLon], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.18,
+            weight: 2,
+            radius: 744.445630 * 1000
+        }).addTo(map);
+
+        // Landmark Probes and Constraint Circles
+        landmarks.forEach(lm => {
+            if (lm.location && lm.location.lat) {
+                const color = lm.type === 'local_vantage' ? '#38bdf8' : (lm.type === 'hop_landmark' ? '#a855f7' : '#eab308');
+
+                // Marker
+                L.circleMarker([lm.location.lat, lm.location.lon], {
+                    radius: 7,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.9,
+                    weight: 2
+                }).addTo(map).bindPopup("<b>📍 " + lm.name + " (" + lm.city + ")</b><br>Tipo: " + lm.type + "<br>RTT: " + lm.min_rtt_ms.toFixed(2) + " ms<br>Radio CBG: " + lm.max_radius_km.toFixed(0) + " km");
+
+                // Constraint Circle
+                L.circle([lm.location.lat, lm.location.lon], {
+                    color: color,
+                    weight: 1.5,
+                    dashArray: '5, 8',
+                    fillColor: color,
+                    fillOpacity: 0.05,
+                    radius: lm.max_radius_km * 1000
+                }).addTo(map);
+            }
+        });
+    </script>
+</body>
+</html>

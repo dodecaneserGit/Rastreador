@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreador - Geolocalización de IP [138.201.0.1]</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+        #map { height: 100vh; width: 100%; }
+        .dashboard-card {
+            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px);
+            padding: 20px; border-radius: 12px; border: 1px solid #334155;
+            max-width: 380px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        }
+        .title { font-size: 1.25rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.5px; }
+        .badge-vpn { background: #dc2626; color: #fff; }
+        .badge-cloud { background: #ea580c; color: #fff; }
+        .badge-direct { background: #16a34a; color: #fff; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.85rem; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        .stat-label { color: #94a3b8; }
+        .stat-val { font-weight: 600; color: #f8fafc; text-align: right; }
+        .gmaps-btn {
+            display: block; width: 100%; box-sizing: border-box; margin-top: 14px; padding: 10px 12px;
+            background: #0284c7; color: #fff; text-align: center; text-decoration: none;
+            border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;
+        }
+        .gmaps-btn:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <div class="title">🎯 Rastreador IP Matrix</div>
+        <div class="badge badge-cloud">DATACENTER_EXIT</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">138.201.0.1</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS24940 (Hetzner)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Germany / Hetzner Online GmbH</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">50.4777, 12.3649</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±15.0 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=50.4777,12.3649" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        const estLat = 50.477700;
+        const estLon = 12.364900;
+        const landmarks = [{"id":"TARGET-LOCATION","name":"Target Host Location","city":"Target","country":"","location":{"lat":50.4777,"lon":12.3649},"min_rtt_ms":0,"max_radius_km":25,"samples":5,"type":"target_location"}];
+        const reconData = {"ip":"138.201.0.1","hostname":"static.1.0.201.138.clients.your-server.de","asn":24940,"as_org":"Hetzner","country":"Germany","country_code":"DE","region":"Saxony","city":"Falkenstein","latitude":50.4777,"longitude":12.3649,"isp":"Hetzner Online GmbH","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: static.1.0.201.138.clients.your-server.de","Cloud/Datacenter provider match: 'hetzner'"]};
+
+        // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
+        const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ',
+            maxZoom: 19
+        });
+
+        const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS',
+            maxZoom: 19
+        });
+
+        const topoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom',
+            maxZoom: 19
+        });
+
+        const map = L.map('map', {
+            center: [estLat, estLon],
+            zoom: 6,
+            layers: [streetMap]
+        });
+
+        const baseMaps = {
+            "🗺️ Mapa Urbano (Esri)": streetMap,
+            "🛰️ Satélite (Esri)": satelliteMap,
+            "🏔️ Topográfico (Esri)": topoMap
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+
+        // Target Marker
+        const targetIcon = L.divIcon({
+            className: 'target-marker',
+            html: '<div style="background-color:#ef4444;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 18px #ef4444;"></div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 15.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .openPopup();
+
+        // Target Confidence Circle
+        L.circle([estLat, estLon], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.18,
+            weight: 2,
+            radius: 15.000000 * 1000
+        }).addTo(map);
+
+        // Landmark Probes and Constraint Circles
+        landmarks.forEach(lm => {
+            if (lm.location && lm.location.lat) {
+                const color = lm.type === 'local_vantage' ? '#38bdf8' : (lm.type === 'hop_landmark' ? '#a855f7' : '#eab308');
+
+                // Marker
+                L.circleMarker([lm.location.lat, lm.location.lon], {
+                    radius: 7,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.9,
+                    weight: 2
+                }).addTo(map).bindPopup("<b>📍 " + lm.name + " (" + lm.city + ")</b><br>Tipo: " + lm.type + "<br>RTT: " + lm.min_rtt_ms.toFixed(2) + " ms<br>Radio CBG: " + lm.max_radius_km.toFixed(0) + " km");
+
+                // Constraint Circle
+                L.circle([lm.location.lat, lm.location.lon], {
+                    color: color,
+                    weight: 1.5,
+                    dashArray: '5, 8',
+                    fillColor: color,
+                    fillOpacity: 0.05,
+                    radius: lm.max_radius_km * 1000
+                }).addTo(map);
+            }
+        });
+    </script>
+</body>
+</html>
