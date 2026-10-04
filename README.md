@@ -2,29 +2,34 @@
 
 **Motor de Geolocalización Activa por Multilateración y Desanonimización de Capas de Red (Go)**
 
-`Rastreador` es una herramienta multiplataforma (macOS, Linux, Windows) diseñada para determinar la ubicación física de una dirección IP mediante el modelo matemático de restricciones **Constraint-Based Geolocation (CBG)**, física de propagación de fibra óptica ($c_{fibra} \approx 200.000\text{ km/s}$), reconocimiento BGP/ASN y análisis diferencial de retardo entre la capa de transporte (L4) y la capa de aplicación (L7) para desenmascarar nodos ocultos tras VPNs o Proxies.
+`Rastreador` es una herramienta de código abierto multiplataforma (macOS, Linux, Windows) diseñada para determinar la ubicación geográfica física real de una dirección IP mediante el modelo matemático de restricciones **Constraint-Based Geolocation (CBG)**, física de propagación en fibra óptica ($c_{fibra} \approx 200.000\text{ km/s}$), reconocimiento BGP/ASN, integración distribuida con **RIPE Atlas** y análisis diferencial de retardo entre la capa de transporte (L4) y la capa de aplicación (L7) para desenmascarar nodos ocultos tras VPNs o Proxies.
 
 ---
 
 ## ⚡ Características Principales
 
-1. **Reconocimiento BGP y Clasificación de Red**:
-   - Consultas DNS directas a Team Cymru para resolución instantánea de ASN, ISP y Organización BGP sin depender de APIs lentas o con rate-limit.
-   - Detección de datacenters, clouds públicas (AWS, GCP, Azure, Hetzner, DigitalOcean, OVH) y proveedores comerciales de VPN.
+1. **Reconocimiento BGP y Clasificación de Infraestructura**:
+   - Consultas DNS directas a Team Cymru para resolución instantánea de ASN, ISP y Organización BGP sin rate-limits.
+   - Detección de datacenters, clouds públicas (AWS, GCP, Azure, Hetzner, DigitalOcean, OVH) y proveedores comerciales de VPN (Mullvad, ProtonVPN, NordVPN, etc.).
    - Identificación de códigos IATA de metro/aeropuertos en registros PTR inversos.
 
 2. **Multilateración Activa CBG (Constraint-Based Geolocation)**:
-   - Sondas de retardo (RTT) ultra-rápidas mediante TCP SYN y ACK en puertos estándar.
+   - Sondas de retardo (RTT) de alta precisión mediante TCP SYN y ACK en puertos estándar.
    - Cálculo del radio máximo físico según la velocidad de la luz en vidrio ($d_{max} = \frac{RTT \times 200}{2}$).
-   - Solver geométrico WGS84 (Haversine) para estimar las coordenadas del host y su radio de confianza.
+   - Solver geométrico espacial WGS84 (Haversine) para estimar las coordenadas y el radio de confianza.
 
-3. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
-   - Medición del $\Delta RTT = RTT_{L7} - RTT_{L4}$ para acotar la distancia física real de clientes tras nodos de salida VPN.
+3. **Integración Global con RIPE Atlas (Sondas Distribuidas Mundiales)**:
+   - Conexión nativa con la API v2 de **RIPE Atlas** para lanzar mediciones *one-off* desde sondas reales distribuidas en múltiples continentes (`WW`, `EU`, `NA`, etc.).
+   - Recuperación automática de mediciones públicas históricas para IPs de servicios troncales.
+
+4. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
+   - Medición del delta $\Delta RTT = RTT_{L7} - RTT_{L4}$ para acotar la distancia física real de clientes tras nodos de salida VPN.
    - Detección de sobrecarga de encapsulación (MTU/MSS).
 
-4. **Visualización y Reportes**:
-   - Generación automática de mapas interactivos en HTML basados en **Leaflet.js** con modo oscuro, circunferencias de restricción y tarjetas HUD.
-   - Exportación de reportes detallados en formato JSON estructurado.
+5. **Visualización en Terminal y Mapas Interactivos**:
+   - **Salida enriquecida en CLI**: resumen visual con coordenadas, ISP, radio de confianza y enlace directo a Google Maps.
+   - **Mapas interactivos HTML (Leaflet.js + Esri ArcGIS)**: capas Satélite, Callejero y Topográfico 100% libres de API keys y compatibles con protocolo `file://`.
+   - **Apertura automática en el navegador**: despliegue instantáneo del mapa generado en el navegador predeterminado (desactivable con `-open=false`).
 
 ---
 
@@ -33,7 +38,7 @@
 Requiere **Go 1.22+**:
 
 ```bash
-git clone https://github.com/dodecaneser/rastreador.git
+git clone https://github.com/dodecaneserGit/Rastreador.git
 cd Rastreador
 go build -o bin/rastreador ./cmd/rastreador
 ```
@@ -42,31 +47,60 @@ go build -o bin/rastreador ./cmd/rastreador
 
 ## 📖 Uso y Ejemplos
 
-### 1. Escaneo y Geolocalización Básica
+### 1. Escaneo Local Básico con Apertura Automática del Mapa
 ```bash
-./bin/rastreador -ip 1.1.1.1 -map map.html -out report.json
+./bin/rastreador -ip 9.9.9.9
 ```
 
-### 2. Escaneo con Análisis de Diferencial de Túnel L4/L7
+### 2. Escaneo con Sondas Mundiales de RIPE Atlas
 ```bash
-./bin/rastreador -ip 198.51.100.4 -l7-url "https://target-domain.com/ping" -map vpn_map.html
+# Pasando la API Key por parámetro:
+./bin/rastreador -ip 1.1.1.1 -ripe-key "TU-API-KEY-RIPE" -ripe-probes 5
+
+# O configurando la variable de entorno:
+export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
+./bin/rastreador -ip 8.8.8.8 -ripe-probes 8
 ```
 
-### 3. Salida en formato JSON crudo para automatizaciones
+### 3. Escaneo con Análisis de Diferencial de Túnel VPN (L4 vs L7)
 ```bash
-./bin/rastreador -ip 8.8.8.8 -json
+./bin/rastreador -ip 198.51.100.4 -l7-url "https://target-domain.com/ping" -map data/vpn_map.html
+```
+
+### 4. Modo Headless / Scripting (Sin abrir navegador y salida JSON)
+```bash
+./bin/rastreador -ip 8.8.8.8 -open=false -out report.json -json
 ```
 
 ---
 
-## 🛠️ Opciones del CLI
+## 🛠️ Referencia Completa de Banderas (CLI Flags)
 
-| Flag | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `-ip` | `string` | Dirección IP objetivo a analizar y geolocalizar (requerido). |
-| `-ports` | `string` | Lista de puertos TCP para sondas RTT (defecto: `80,443,22,53,8080`). |
-| `-samples` | `int` | Número de paquetes de prueba por sonda para filtrar ruido (defecto: `5`). |
-| `-l7-url` | `string` | URL HTTP/S en el objetivo para medir la diferencia de latencia L4 vs L7. |
-| `-map` | `string` | Ruta de salida para el mapa HTML interactivo (defecto: `map_result.html`). |
-| `-out` | `string` | Ruta de guardado para el informe estructurado en JSON. |
-| `-json` | `bool` | Imprime únicamente JSON por stdout. |
+| Flag | Tipo | Defecto | Descripción |
+| :--- | :--- | :--- | :--- |
+| `-ip` | `string` | *requerido* | Dirección IP objetivo a analizar y geolocalizar. |
+| `-ripe-key` | `string` | `""` | Clave API de RIPE Atlas para desplegar sondas mundiales (o variable `RIPE_ATLAS_KEY`). |
+| `-ripe-probes` | `int` | `5` | Número de sondas mundiales simultáneas a solicitar a RIPE Atlas. |
+| `-ports` | `string` | `80,443,22,53,8080` | Puertos TCP separados por coma para medir RTT en capa 4. |
+| `-samples` | `int` | `5` | Muestras de paquetes por sonda para filtrar jitter y ruido de red. |
+| `-l7-url` | `string` | `""` | Endpoint HTTP/S en el objetivo para medir retardo de capa de aplicación (L7). |
+| `-map` | `string` | `map_result.html` | Ruta donde guardar el mapa interactivo HTML. |
+| `-open` | `bool` | `true` | Abre automáticamente el mapa HTML en el navegador del sistema. |
+| `-out` | `string` | `""` | Ruta de guardado para el informe estructurado en JSON. |
+| `-json` | `bool` | `false` | Imprime únicamente la estructura JSON limpia por stdout. |
+
+---
+
+## 🗺️ Visualización del Mapa
+
+El archivo HTML generado contiene:
+* **Marcador del Objetivo**: punto central estimado con círculo de confianza geodésico ($\pm X\text{ km}$).
+* **Círculos de Restricción CBG**: circunferencias de alcance máximo de cada sonda / landmark según la velocidad de la luz en fibra.
+* **Selector de Capas**: alternancia entre *Esri World Street Map*, *Esri World Imagery (Satélite)* y *Esri Topográfico*.
+* **Tarjeta HUD**: métricas en tiempo real de BGP, ASN, ISP y botón directo a Google Maps.
+
+---
+
+## 📄 Licencia
+
+Proyecto desarrollado bajo licencia MIT. Consulta el archivo `LICENSE` para más información.
