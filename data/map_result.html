@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreador - Geolocalización de IP [1.1.1.1]</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+        #map { height: 100vh; width: 100%; }
+        .dashboard-card {
+            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px);
+            padding: 20px; border-radius: 12px; border: 1px solid #334155;
+            max-width: 380px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        }
+        .title { font-size: 1.25rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.5px; }
+        .badge-vpn { background: #dc2626; color: #fff; }
+        .badge-cloud { background: #ea580c; color: #fff; }
+        .badge-direct { background: #16a34a; color: #fff; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.85rem; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        .stat-label { color: #94a3b8; }
+        .stat-val { font-weight: 600; color: #f8fafc; text-align: right; }
+        .gmaps-btn {
+            display: block; width: 100%; box-sizing: border-box; margin-top: 14px; padding: 8px 12px;
+            background: #0284c7; color: #fff; text-align: center; text-decoration: none;
+            border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;
+        }
+        .gmaps-btn:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <div class="title">🎯 Rastreador IP Matrix</div>
+        <div class="badge badge-cloud">DATACENTER_EXIT</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">1.1.1.1</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Organización:</span><span class="stat-val">AS13335 (CLOUDFLARENET - Cloudflare, Inc., US)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">AU / CLOUDFLARENET - Cloudflare, Inc., US</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">69.2552, 38.3174</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±5733.0 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas Activas:</span><span class="stat-val">11 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps?q=69.2552,38.3174" target="_blank">Abrir en Google Maps ↗</a>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        const estLat = 69.255168;
+        const estLon = 38.317425;
+        const landmarks = [{"id":"FRA-DE","name":"Frankfurt Landmark","city":"Frankfurt","country":"DE","location":{"lat":50.1109,"lon":8.6821},"min_rtt_ms":7.582,"max_radius_km":758.1999999999999,"samples":5},{"id":"MAD-ES","name":"Madrid Landmark","city":"Madrid","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":7.498,"max_radius_km":749.8000000000001,"samples":5},{"id":"PAR-FR","name":"Paris Landmark","city":"Paris","country":"FR","location":{"lat":48.8566,"lon":2.3522},"min_rtt_ms":11.265,"max_radius_km":1126.5,"samples":5},{"id":"SIN-SG","name":"Singapore Landmark","city":"Singapore","country":"SG","location":{"lat":1.3521,"lon":103.8198},"min_rtt_ms":11.367,"max_radius_km":1136.7,"samples":5},{"id":"GRU-BR","name":"Sao Paulo Landmark","city":"Sao Paulo","country":"BR","location":{"lat":-23.5505,"lon":-46.6333},"min_rtt_ms":13.712,"max_radius_km":1371.2,"samples":5},{"id":"LON-UK","name":"London Landmark","city":"London","country":"GB","location":{"lat":51.5074,"lon":-0.1278},"min_rtt_ms":11.431,"max_radius_km":1143.1,"samples":5},{"id":"AMS-NL","name":"Amsterdam Landmark","city":"Amsterdam","country":"NL","location":{"lat":52.3676,"lon":4.9041},"min_rtt_ms":13.711,"max_radius_km":1371.1000000000001,"samples":5},{"id":"SYD-AU","name":"Sydney Landmark","city":"Sydney","country":"AU","location":{"lat":-33.8688,"lon":151.2093},"min_rtt_ms":11.081,"max_radius_km":1108.1,"samples":5},{"id":"SFO-US","name":"San Francisco Landmark","city":"San Francisco","country":"US","location":{"lat":37.7749,"lon":-122.4194},"min_rtt_ms":14.123,"max_radius_km":1412.3,"samples":5},{"id":"TYO-JP","name":"Tokyo Landmark","city":"Tokyo","country":"JP","location":{"lat":35.6762,"lon":139.6503},"min_rtt_ms":13.824,"max_radius_km":1382.4,"samples":5},{"id":"NYC-US","name":"New York Landmark","city":"New York","country":"US","location":{"lat":40.7128,"lon":-74.006},"min_rtt_ms":11.399,"max_radius_km":1139.8999999999999,"samples":5}];
+        const reconData = {"ip":"1.1.1.1","hostname":"one.one.one.one","asn":13335,"as_org":"CLOUDFLARENET - Cloudflare, Inc., US","country":"AU","isp":"CLOUDFLARENET - Cloudflare, Inc., US","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: one.one.one.one","Cloud/Datacenter provider match: 'cloudflare'"]};
+
+        // Initialize Map centered on estimated coordinates
+        const map = L.map('map').setView([estLat, estLon], 5);
+
+        // 100% Free OpenStreetMap Tile Layer without API key requirements
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Target Estimated Marker
+        const targetIcon = L.divIcon({
+            className: 'target-marker',
+            html: '<div style="background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 15px #ef4444;"></div>',
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+        });
+
+        const targetMarker = L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 5733.009490.toFixed(1) + " km")
+            .openPopup();
+
+        // Target Confidence Circle
+        L.circle([estLat, estLon], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.18,
+            weight: 2,
+            radius: 5733.009490 * 1000
+        }).addTo(map);
+
+        // Landmark Probes and Constraint Circles
+        landmarks.forEach(lm => {
+            if (lm.location && lm.location.lat) {
+                // Landmark Marker
+                L.circleMarker([lm.location.lat, lm.location.lon], {
+                    radius: 7,
+                    color: '#0284c7',
+                    fillColor: '#38bdf8',
+                    fillOpacity: 0.9,
+                    weight: 2
+                }).addTo(map).bindPopup("<b>📍 " + lm.name + " (" + lm.city + ")</b><br>RTT Mínimo: " + lm.min_rtt_ms.toFixed(2) + " ms<br>Radio Máximo CBG: " + lm.max_radius_km.toFixed(0) + " km");
+
+                // Constraint Circle
+                L.circle([lm.location.lat, lm.location.lon], {
+                    color: '#0284c7',
+                    weight: 1,
+                    dashArray: '5, 8',
+                    fillColor: '#38bdf8',
+                    fillOpacity: 0.05,
+                    radius: lm.max_radius_km * 1000
+                }).addTo(map);
+            }
+        });
+    </script>
+</body>
+</html>

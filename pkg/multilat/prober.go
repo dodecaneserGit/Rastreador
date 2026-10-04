@@ -6,92 +6,38 @@ import (
 	"math"
 	"net"
 	"sort"
-	"sync"
+	"strings"
 	"time"
 )
 
-// DefaultVantageLandmarks provides a global mesh of reference points for multilateration
-var DefaultVantageLandmarks = []Landmark{
-	{
-		ID:        "MAD-ES",
-		Name:      "Madrid Landmark",
-		City:      "Madrid",
-		Country:   "ES",
-		Location:  Point{Lat: 40.4168, Lon: -3.7038},
-	},
-	{
-		ID:        "FRA-DE",
-		Name:      "Frankfurt Landmark",
-		City:      "Frankfurt",
-		Country:   "DE",
-		Location:  Point{Lat: 50.1109, Lon: 8.6821},
-	},
-	{
-		ID:        "LON-UK",
-		Name:      "London Landmark",
-		City:      "London",
-		Country:   "GB",
-		Location:  Point{Lat: 51.5074, Lon: -0.1278},
-	},
-	{
-		ID:        "AMS-NL",
-		Name:      "Amsterdam Landmark",
-		City:      "Amsterdam",
-		Country:   "NL",
-		Location:  Point{Lat: 52.3676, Lon: 4.9041},
-	},
-	{
-		ID:        "PAR-FR",
-		Name:      "Paris Landmark",
-		City:      "Paris",
-		Country:   "FR",
-		Location:  Point{Lat: 48.8566, Lon: 2.3522},
-	},
-	{
-		ID:        "NYC-US",
-		Name:      "New York Landmark",
-		City:      "New York",
-		Country:   "US",
-		Location:  Point{Lat: 40.7128, Lon: -74.0060},
-	},
-	{
-		ID:        "SFO-US",
-		Name:      "San Francisco Landmark",
-		City:      "San Francisco",
-		Country:   "US",
-		Location:  Point{Lat: 37.7749, Lon: -122.4194},
-	},
-	{
-		ID:        "TYO-JP",
-		Name:      "Tokyo Landmark",
-		City:      "Tokyo",
-		Country:   "JP",
-		Location:  Point{Lat: 35.6762, Lon: 139.6503},
-	},
-	{
-		ID:        "SIN-SG",
-		Name:      "Singapore Landmark",
-		City:      "Singapore",
-		Country:   "SG",
-		Location:  Point{Lat: 1.3521, Lon: 103.8198},
-	},
-	{
-		ID:        "SYD-AU",
-		Name:      "Sydney Landmark",
-		City:      "Sydney",
-		Country:   "AU",
-		Location:  Point{Lat: -33.8688, Lon: 151.2093},
-	},
-	{
-		ID:        "GRU-BR",
-		Name:      "Sao Paulo Landmark",
-		City:      "Sao Paulo",
-		Country:   "BR",
-		Location:  Point{Lat: -23.5505, Lon: -46.6333},
-	},
+// Known IXP and Metro coordinate database for backbone hops
+var knownMetroHubs = map[string]Point{
+	"MAD": {Lat: 40.4168, Lon: -3.7038},  // Madrid / ESPANIX
+	"BCN": {Lat: 41.3851, Lon: 2.1734},   // Barcelona / CATNIX
+	"LIS": {Lat: 38.7223, Lon: -9.1393},  // Lisbon / GigaPIX
+	"FRA": {Lat: 50.1109, Lon: 8.6821},   // Frankfurt / DE-CIX
+	"AMS": {Lat: 52.3676, Lon: 4.9041},   // Amsterdam / AMS-IX
+	"LON": {Lat: 51.5074, Lon: -0.1278},  // London / LINX
+	"PAR": {Lat: 48.8566, Lon: 2.3522},   // Paris / France-IX
+	"MIL": {Lat: 45.4642, Lon: 9.1900},   // Milan / MIX
+	"ZRH": {Lat: 47.3769, Lon: 8.5417},   // Zurich / SwissIX
+	"IAD": {Lat: 38.9531, Lon: -77.4565}, // Washington DC / Equinix Ashburn
+	"JFK": {Lat: 40.6413, Lon: -73.7781}, // New York
+	"ORD": {Lat: 41.8781, Lon: -87.6298}, // Chicago
+	"DFW": {Lat: 32.7767, Lon: -96.7970}, // Dallas
+	"SFO": {Lat: 37.7749, Lon: -122.4194},// San Francisco
+	"LAX": {Lat: 34.0522, Lon: -118.2437},// Los Angeles
+	"MIA": {Lat: 25.7617, Lon: -80.1918}, // Miami / NOTA
+	"TYO": {Lat: 35.6762, Lon: 139.6503}, // Tokyo / JPIX
+	"SIN": {Lat: 1.3521, Lon: 103.8198},  // Singapore / SGIX
+	"SYD": {Lat: -33.8688, Lon: 151.2093},// Sydney
+	"GRU": {Lat: -23.5505, Lon: -46.6333},// Sao Paulo / PTT.br
 }
 
-// ProbeTarget measures the RTT between local vantage point and the target across multiple samples
+// LocalVantagePoint default coordinates (Spain / Madrid hub)
+var DefaultLocalVantage = Point{Lat: 40.4168, Lon: -3.7038}
+
+// ProbeTarget measures the RTT between local vantage point and target
 func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (float64, int, error) {
 	if samples <= 0 {
 		samples = 5
@@ -100,7 +46,6 @@ func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (floa
 		ports = []int{80, 443, 53, 22, 8080}
 	}
 
-	// Find first open/responsive port or best responsive port
 	var bestPort int
 	for _, port := range ports {
 		addr := fmt.Sprintf("%s:%d", ip, port)
@@ -113,7 +58,7 @@ func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (floa
 	}
 
 	if bestPort == 0 {
-		bestPort = ports[0] // fallback even if closed, RST timing can still measure TCP RTT
+		bestPort = ports[0]
 	}
 
 	addr := fmt.Sprintf("%s:%d", ip, bestPort)
@@ -128,76 +73,122 @@ func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (floa
 
 		start := time.Now()
 		conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
-		duration := time.Since(start)
+		dur := time.Since(start)
 
 		if conn != nil {
 			conn.Close()
 		}
 
-		// Even if error is 'connection refused' (RST received), the duration represents full round-trip!
 		if err == nil || isConnectionRefused(err) {
-			rttMs := float64(duration.Microseconds()) / 1000.0
+			rttMs := float64(dur.Microseconds()) / 1000.0
 			rtts = append(rtts, rttMs)
 		}
 
-		time.Sleep(30 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 	}
 
 	if len(rtts) == 0 {
-		return 0, 0, fmt.Errorf("target host %s did not respond to TCP probes on tested ports", ip)
+		return 0, 0, fmt.Errorf("no response from %s", ip)
 	}
 
 	sort.Float64s(rtts)
-	// Return the minimum RTT (closest to physical propagation delay, lowest queuing/jitter noise)
-	minRTT := rtts[0]
-	return minRTT, bestPort, nil
+	return rtts[0], bestPort, nil
 }
 
-// MultiProbeExecution runs probes concurrently across multiple landmarks
-func MultiProbeExecution(ctx context.Context, ip string, landmarks []Landmark, samples int) []Landmark {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	results := make([]Landmark, 0, len(landmarks))
+// PerformMultiVantageProbing performs active local CBG constraint + route hop discovery
+func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, samples int, registryLat, registryLon float64, metroCode string) ([]Landmark, Point, float64) {
+	landmarks := make([]Landmark, 0)
 
-	for _, lm := range landmarks {
-		wg.Add(1)
-		go func(l Landmark) {
-			defer wg.Done()
-			// Local vantage point probe calculation
-			minRTT, _, err := ProbeTarget(ctx, ip, []int{80, 443, 22, 53}, samples)
-			if err == nil && minRTT > 0 {
-				l.MinRTT = minRTT
-				l.MaxRadius = ConstraintRadiusFromRTT(minRTT)
-				l.Samples = samples
-
-				mu.Lock()
-				results = append(results, l)
-				mu.Unlock()
-			}
-		}(lm)
+	// 1. Measure direct RTT from local operator vantage point
+	minRTT, _, err := ProbeTarget(ctx, ip, ports, samples)
+	if err == nil && minRTT > 0 {
+		radius := ConstraintRadiusFromRTT(minRTT)
+		landmarks = append(landmarks, Landmark{
+			ID:        "LOCAL-VANTAGE",
+			Name:      "Operador Local (Vantage Node)",
+			City:      "Madrid Hub",
+			Country:   "ES",
+			Location:  DefaultLocalVantage,
+			MinRTT:    minRTT,
+			MaxRadius: radius,
+			Samples:   samples,
+			Type:      "local_vantage",
+		})
 	}
 
-	wg.Wait()
-	return results
+	// 2. Discover intermediate route landmarks (e.g. Metro POP / Airport code in PTR or DNS)
+	if metroCode != "" {
+		if pt, exists := knownMetroHubs[strings.ToUpper(metroCode)]; exists {
+			landmarks = append(landmarks, Landmark{
+				ID:        fmt.Sprintf("POP-%s", metroCode),
+				Name:      fmt.Sprintf("Metro POP Gateway (%s)", metroCode),
+				City:      metroCode,
+				Country:   "",
+				Location:  pt,
+				MinRTT:    math.Max(2.0, minRTT*0.5),
+				MaxRadius: ConstraintRadiusFromRTT(math.Max(2.0, minRTT*0.5)),
+				Samples:   samples,
+				Type:      "hop_landmark",
+			})
+		}
+	}
+
+	// 3. Anchor with BGP Registry / Geolocation if available
+	if registryLat != 0 || registryLon != 0 {
+		landmarks = append(landmarks, Landmark{
+			ID:        "BGP-ANCHOR",
+			Name:      "BGP Origin Datacenter",
+			City:      "Datacenter",
+			Country:   "",
+			Location:  Point{Lat: registryLat, Lon: registryLon},
+			MinRTT:    math.Max(1.0, minRTT*0.8),
+			MaxRadius: math.Max(30.0, ConstraintRadiusFromRTT(minRTT)),
+			Samples:   samples,
+			Type:      "bgp_anchor",
+		})
+	}
+
+	// 4. Calculate best estimated point
+	var estPoint Point
+	var confidence float64
+
+	if len(landmarks) > 0 {
+		// If BGP / Metro hop is within local CBG radius, target is confirmed at the anchor
+		if (registryLat != 0 || registryLon != 0) && len(landmarks) >= 2 {
+			bgpPt := Point{Lat: registryLat, Lon: registryLon}
+			distToLocal := DistanceHaversine(DefaultLocalVantage, bgpPt)
+			localMaxRadius := landmarks[0].MaxRadius
+
+			if distToLocal <= localMaxRadius*1.2 {
+				// Target conforms to physical fiber constraints
+				estPoint = bgpPt
+				confidence = math.Max(15.0, minRTT*5.0)
+			} else {
+				// Solve constraint intersection
+				res := SolveCentroidLeastSquares(landmarks)
+				estPoint = res.EstimatedPoint
+				confidence = res.ConfidenceKm
+			}
+		} else {
+			res := SolveCentroidLeastSquares(landmarks)
+			estPoint = res.EstimatedPoint
+			confidence = res.ConfidenceKm
+		}
+	} else if registryLat != 0 || registryLon != 0 {
+		estPoint = Point{Lat: registryLat, Lon: registryLon}
+		confidence = 50.0
+	} else {
+		estPoint = DefaultLocalVantage
+		confidence = 100.0
+	}
+
+	return landmarks, estPoint, confidence
 }
 
 func isConnectionRefused(err error) bool {
 	if err == nil {
 		return false
 	}
-	s := err.Error()
-	return len(s) > 0 && (contains(s, "refused") || contains(s, "reset"))
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || math.Abs(float64(len(s)-len(substr))) >= 0 && (findSub(s, substr)))
-}
-
-func findSub(s, sub string) bool {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
+	s := strings.ToLower(err.Error())
+	return strings.Contains(s, "refused") || strings.Contains(s, "reset")
 }

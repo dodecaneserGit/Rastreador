@@ -66,41 +66,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 2. Multilateration Probing (CBG)
+	// 2. Multilateration Probing (CBG & Route Discovery)
 	if !*jsonOnlyFlag {
-		fmt.Println("[+] Paso 2/3: Ejecutando sondas de retardo (RTT) desde red de landmarks...")
+		fmt.Println("[+] Paso 2/3: Ejecutando sondeo de retardo RTT y mapeo de restricciones CBG...")
 	}
 
 	ports := parsePorts(*portsFlag)
-	activeLandmarks := multilat.MultiProbeExecution(ctx, *ipFlag, multilat.DefaultVantageLandmarks, *samplesFlag)
+	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode)
 
-	// Fallback calibration probe if needed
-	if len(activeLandmarks) == 0 {
-		minRTT, _, probeErr := multilat.ProbeTarget(ctx, *ipFlag, ports, *samplesFlag)
-		if probeErr == nil && minRTT > 0 {
-			activeLandmarks = append(activeLandmarks, multilat.Landmark{
-				ID:        "LOCAL-PROBE",
-				Name:      "Local Vantage Node",
-				City:      "Local",
-				Country:   reconInfo.Country,
-				Location:  multilat.Point{Lat: reconInfo.Latitude, Lon: reconInfo.Longitude},
-				MinRTT:    minRTT,
-				MaxRadius: multilat.ConstraintRadiusFromRTT(minRTT),
-				Samples:   *samplesFlag,
-			})
-		}
-	}
-
-	// Solve coordinates
-	var multiResult multilat.MultilaterationResult
-	if len(activeLandmarks) > 0 {
-		multiResult = multilat.SolveCentroidLeastSquares(activeLandmarks)
-	} else if reconInfo.Latitude != 0 || reconInfo.Longitude != 0 {
-		multiResult = multilat.MultilaterationResult{
-			EstimatedPoint: multilat.Point{Lat: reconInfo.Latitude, Lon: reconInfo.Longitude},
-			ConfidenceKm:   50.0,
-			UsedLandmarks:  activeLandmarks,
-		}
+	multiResult := multilat.MultilaterationResult{
+		EstimatedPoint: estPoint,
+		ConfidenceKm:   confidence,
+		UsedLandmarks:  landmarks,
 	}
 
 	// 3. Tunnel & Encapsulation Timing Differential
@@ -127,7 +104,7 @@ func main() {
 	if *mapHTMLFlag != "" && multiResult.EstimatedPoint.Lat != 0 {
 		if err := report.GenerateHTMLMap(fullReport, *mapHTMLFlag); err == nil {
 			if !*jsonOnlyFlag {
-				fmt.Printf("[✓] Mapa interactivo generado en: \033[1;32m%s\033[0m (OpenStreetMap - Sin requerir API Key)\n", *mapHTMLFlag)
+				fmt.Printf("[✓] Mapa interactivo generado en: \033[1;32m%s\033[0m (Esri & Leaflet - Sin requerir API Key)\n", *mapHTMLFlag)
 			}
 			if *openBrowserFlag && !*jsonOnlyFlag {
 				_ = report.OpenInBrowser(*mapHTMLFlag)

@@ -23,7 +23,7 @@ type FullScanReport struct {
 }
 
 // GenerateHTMLMap creates an interactive Leaflet.js visualization of landmarks, circles, and estimated point
-// Uses 100% free, public OpenStreetMap tiles that DO NOT require any API key.
+// Uses ESRI and Carto public tile layers with layer switching that work 100% locally from file:// without API keys.
 func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
 	if report.Multilateration == nil {
 		return fmt.Errorf("no multilateration data available to generate map")
@@ -46,7 +46,7 @@ func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
         #map { height: 100vh; width: 100%%; }
         .dashboard-card {
             position: absolute; top: 20px; left: 20px; z-index: 1000;
-            background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px);
             padding: 20px; border-radius: 12px; border: 1px solid #334155;
             max-width: 380px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);
         }
@@ -59,7 +59,7 @@ func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
         .stat-label { color: #94a3b8; }
         .stat-val { font-weight: 600; color: #f8fafc; text-align: right; }
         .gmaps-btn {
-            display: block; width: 100%%; box-sizing: border-box; margin-top: 14px; padding: 8px 12px;
+            display: block; width: 100%%; box-sizing: border-box; margin-top: 14px; padding: 10px 12px;
             background: #0284c7; color: #fff; text-align: center; text-decoration: none;
             border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;
         }
@@ -71,12 +71,12 @@ func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
         <div class="title">🎯 Rastreador IP Matrix</div>
         <div class="badge %s">%s</div>
         <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">%s</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Organización:</span><span class="stat-val">AS%d (%s)</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS%d (%s)</span></div>
         <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">%s / %s</span></div>
         <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">%.4f, %.4f</span></div>
         <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±%.1f km</span></div>
-        <div class="stat-row"><span class="stat-label">Sondas Activas:</span><span class="stat-val">%d Nodos</span></div>
-        <a class="gmaps-btn" href="https://www.google.com/maps?q=%.4f,%.4f" target="_blank">Abrir en Google Maps ↗</a>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">%d Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=%.4f,%.4f" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
 
@@ -86,25 +86,46 @@ func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
         const landmarks = %s;
         const reconData = %s;
 
-        // Initialize Map centered on estimated coordinates
-        const map = L.map('map').setView([estLat, estLon], 5);
-
-        // 100%% Free OpenStreetMap Tile Layer without API key requirements
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // Base Tile Layers (100%% Free, No API Key needed, Full file:// support)
+        const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ',
             maxZoom: 19
-        }).addTo(map);
-
-        // Target Estimated Marker
-        const targetIcon = L.divIcon({
-            className: 'target-marker',
-            html: '<div style="background-color:#ef4444;width:20px;height:20px;border-radius:50%%;border:3px solid #fff;box-shadow:0 0 15px #ef4444;"></div>',
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
         });
 
-        const targetMarker = L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + %f.toFixed(1) + " km")
+        const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS',
+            maxZoom: 19
+        });
+
+        const topoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom',
+            maxZoom: 19
+        });
+
+        const map = L.map('map', {
+            center: [estLat, estLon],
+            zoom: 6,
+            layers: [streetMap]
+        });
+
+        const baseMaps = {
+            "🗺️ Mapa Urbano (Esri)": streetMap,
+            "🛰️ Satélite (Esri)": satelliteMap,
+            "🏔️ Topográfico (Esri)": topoMap
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+
+        // Target Marker
+        const targetIcon = L.divIcon({
+            className: 'target-marker',
+            html: '<div style="background-color:#ef4444;width:22px;height:22px;border-radius:50%%;border:3px solid #fff;box-shadow:0 0 18px #ef4444;"></div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + %f.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -119,21 +140,23 @@ func GenerateHTMLMap(report *FullScanReport, outputPath string) error {
         // Landmark Probes and Constraint Circles
         landmarks.forEach(lm => {
             if (lm.location && lm.location.lat) {
-                // Landmark Marker
+                const color = lm.type === 'local_vantage' ? '#38bdf8' : (lm.type === 'hop_landmark' ? '#a855f7' : '#eab308');
+
+                // Marker
                 L.circleMarker([lm.location.lat, lm.location.lon], {
                     radius: 7,
-                    color: '#0284c7',
-                    fillColor: '#38bdf8',
+                    color: color,
+                    fillColor: color,
                     fillOpacity: 0.9,
                     weight: 2
-                }).addTo(map).bindPopup("<b>📍 " + lm.name + " (" + lm.city + ")</b><br>RTT Mínimo: " + lm.min_rtt_ms.toFixed(2) + " ms<br>Radio Máximo CBG: " + lm.max_radius_km.toFixed(0) + " km");
+                }).addTo(map).bindPopup("<b>📍 " + lm.name + " (" + lm.city + ")</b><br>Tipo: " + lm.type + "<br>RTT: " + lm.min_rtt_ms.toFixed(2) + " ms<br>Radio CBG: " + lm.max_radius_km.toFixed(0) + " km");
 
                 // Constraint Circle
                 L.circle([lm.location.lat, lm.location.lon], {
-                    color: '#0284c7',
-                    weight: 1,
+                    color: color,
+                    weight: 1.5,
                     dashArray: '5, 8',
-                    fillColor: '#38bdf8',
+                    fillColor: color,
                     fillOpacity: 0.05,
                     radius: lm.max_radius_km * 1000
                 }).addTo(map);

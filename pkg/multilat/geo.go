@@ -50,6 +50,7 @@ type Landmark struct {
 	MinRTT    float64 `json:"min_rtt_ms"`
 	MaxRadius float64 `json:"max_radius_km"`
 	Samples   int     `json:"samples"`
+	Type      string  `json:"type"` // "local_vantage", "hop_landmark", "bgp_anchor"
 }
 
 // MultilaterationResult contains the computed target area and coordinates

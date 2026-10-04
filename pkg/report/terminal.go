@@ -32,13 +32,13 @@ func PrintTerminalSummary(rep *FullScanReport) {
 		fmt.Println("\n  📍 UBICACIÓN FÍSICA ESTIMADA (MULTILATERACIÓN ACTIVA):")
 		fmt.Printf("    • Coordenadas (WGS84) : \033[1;32m%.4f, %.4f\033[0m\n", est.Lat, est.Lon)
 		fmt.Printf("    • Radio de Confianza  : ±%.1f km\n", rep.Multilateration.ConfidenceKm)
-		fmt.Printf("    • Enlace Google Maps  : \033[4;34mhttps://www.google.com/maps?q=%.4f,%.4f\033[0m\n", est.Lat, est.Lon)
-		fmt.Printf("    • Nodos Utilizados    : %d landmarks activos\n", len(rep.Multilateration.UsedLandmarks))
+		fmt.Printf("    • Enlace Google Maps  : \033[4;34mhttps://www.google.com/maps/search/?api=1&query=%.4f,%.4f\033[0m\n", est.Lat, est.Lon)
+		fmt.Printf("    • Nodos / Hops        : %d landmarks activos\n", len(rep.Multilateration.UsedLandmarks))
 
 		if len(rep.Multilateration.UsedLandmarks) > 0 {
 			fmt.Println("    • Desglose por Sonda  :")
 			for _, lm := range rep.Multilateration.UsedLandmarks {
-				fmt.Printf("      - \033[1m%-18s\033[0m (%s): RTT mín = %6.2f ms | Radio CBG = %5.0f km\n",
+				fmt.Printf("      - \033[1m%-24s\033[0m (%-10s): RTT mín = %6.2f ms | Radio CBG = %5.0f km\n",
 					lm.Name, lm.City, lm.MinRTT, lm.MaxRadius)
 			}
 		}
