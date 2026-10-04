@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador - Geolocalización de IP [9.9.9.9]</title>
+    <title>Rastreador - Geolocalización de IP [8.8.8.8]</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -34,12 +34,12 @@
 <body>
     <div class="dashboard-card">
         <div class="title">🎯 Rastreador IP Matrix</div>
-        <div class="badge badge-direct">RESIDENTIAL_OR_DIRECT</div>
-        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">9.9.9.9</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS19281 (QUAD9-AS-1 - Quad9, US)</span></div>
-        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">US / QUAD9-AS-1 - Quad9, US</span></div>
+        <div class="badge badge-cloud">DATACENTER_EXIT</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">8.8.8.8</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS15169 (GOOGLE - Google LLC, US)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">US / GOOGLE - Google LLC, US</span></div>
         <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.4168, -3.7038</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±742.0 km</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±665.0 km</span></div>
         <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
         <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.4168,-3.7038" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
@@ -48,8 +48,8 @@
     <script>
         const estLat = 40.416800;
         const estLon = -3.703800;
-        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":7.42,"max_radius_km":742,"samples":5,"type":"local_vantage"}];
-        const reconData = {"ip":"9.9.9.9","hostname":"dns9.quad9.net","asn":19281,"as_org":"QUAD9-AS-1 - Quad9, US","country":"US","isp":"QUAD9-AS-1 - Quad9, US","is_cloud":false,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"RESIDENTIAL_OR_DIRECT","indicators":["PTR: dns9.quad9.net"]};
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":6.65,"max_radius_km":665,"samples":5,"type":"local_vantage"}];
+        const reconData = {"ip":"8.8.8.8","hostname":"dns.google","asn":15169,"as_org":"GOOGLE - Google LLC, US","country":"US","isp":"GOOGLE - Google LLC, US","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: dns.google","Cloud/Datacenter provider match: 'google'"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
         const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 742.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 665.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 742.000000 * 1000
+            radius: 665.000000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles

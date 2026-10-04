@@ -31,6 +31,8 @@ func main() {
 	portsFlag := flag.String("ports", "80,443,22,53,8080", "Comma-separated TCP ports for RTT probing")
 	samplesFlag := flag.Int("samples", 5, "Number of probe samples per landmark")
 	l7URLFlag := flag.String("l7-url", "", "Optional HTTP/HTTPS endpoint on target for L4 vs L7 timing differential")
+	ripeKeyFlag := flag.String("ripe-key", "", "Optional RIPE Atlas API Key for distributed worldwide probing")
+	ripeProbesFlag := flag.Int("ripe-probes", 5, "Number of worldwide probes to request from RIPE Atlas")
 	outJSONFlag := flag.String("out", "", "Output JSON report path")
 	mapHTMLFlag := flag.String("map", "map_result.html", "Output interactive HTML Leaflet map path")
 	openBrowserFlag := flag.Bool("open", true, "Automatically open the generated HTML map in default web browser")
@@ -53,7 +55,7 @@ func main() {
 		fmt.Printf("[*] Iniciando rastreo y multilateración sobre objetivo: \033[1;36m%s\033[0m\n\n", *ipFlag)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
 	defer cancel()
 
 	// 1. Reconnaissance & BGP Classification
@@ -66,13 +68,46 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 2. Multilateration Probing (CBG & Route Discovery)
+	// 2. Multilateration Probing (Local Vantage + RIPE Atlas Global Sondas)
 	if !*jsonOnlyFlag {
-		fmt.Println("[+] Paso 2/3: Ejecutando sondeo de retardo RTT y mapeo de restricciones CBG...")
+		fmt.Println("[+] Paso 2/3: Ejecutando sondeo de retardo RTT y multilateración multi-nodo...")
 	}
 
 	ports := parsePorts(*portsFlag)
 	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode)
+
+	// Query RIPE Atlas if API key is provided or to fetch public distributed measurements
+	ripeClient := multilat.NewRIPEAtlasClient(*ripeKeyFlag)
+	if ripeClient.APIKey != "" {
+		if !*jsonOnlyFlag {
+			fmt.Printf("    • Solicitando %d sondas globales a la API de RIPE Atlas...\n", *ripeProbesFlag)
+		}
+		ripeLandmarks, err := ripeClient.RunRIPEAtlasProbing(ctx, *ipFlag, *ripeProbesFlag)
+		if err == nil && len(ripeLandmarks) > 0 {
+			if !*jsonOnlyFlag {
+				fmt.Printf("    • Recibidas %d respuestas de sondas RIPE Atlas en todo el mundo.\n", len(ripeLandmarks))
+			}
+			landmarks = append(landmarks, ripeLandmarks...)
+			// Re-solve coordinates with the distributed global dataset
+			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
+			estPoint = multiSolverRes.EstimatedPoint
+			confidence = multiSolverRes.ConfidenceKm
+		} else if !*jsonOnlyFlag && err != nil {
+			fmt.Printf("    • [!] Nota RIPE Atlas: %v\n", err)
+		}
+	} else {
+		// Try fetching public historical RIPE measurements if available
+		publicLandmarks, err := ripeClient.FetchPublicMeasurements(ctx, *ipFlag)
+		if err == nil && len(publicLandmarks) > 0 {
+			if !*jsonOnlyFlag {
+				fmt.Printf("    • Incorporadas %d sondas históricas públicas de RIPE Atlas.\n", len(publicLandmarks))
+			}
+			landmarks = append(landmarks, publicLandmarks...)
+			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
+			estPoint = multiSolverRes.EstimatedPoint
+			confidence = multiSolverRes.ConfidenceKm
+		}
+	}
 
 	multiResult := multilat.MultilaterationResult{
 		EstimatedPoint: estPoint,
@@ -104,7 +139,7 @@ func main() {
 	if *mapHTMLFlag != "" && multiResult.EstimatedPoint.Lat != 0 {
 		if err := report.GenerateHTMLMap(fullReport, *mapHTMLFlag); err == nil {
 			if !*jsonOnlyFlag {
-				fmt.Printf("[✓] Mapa interactivo generado en: \033[1;32m%s\033[0m (Esri & Leaflet - Sin requerir API Key)\n", *mapHTMLFlag)
+				fmt.Printf("[✓] Mapa interactivo generado en: \033[1;32m%s\033[0m (Esri & Leaflet)\n", *mapHTMLFlag)
 			}
 			if *openBrowserFlag && !*jsonOnlyFlag {
 				_ = report.OpenInBrowser(*mapHTMLFlag)
