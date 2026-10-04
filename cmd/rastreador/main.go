@@ -33,6 +33,7 @@ func main() {
 	l7URLFlag := flag.String("l7-url", "", "Optional HTTP/HTTPS endpoint on target for L4 vs L7 timing differential")
 	outJSONFlag := flag.String("out", "", "Output JSON report path")
 	mapHTMLFlag := flag.String("map", "map_result.html", "Output interactive HTML Leaflet map path")
+	openBrowserFlag := flag.Bool("open", true, "Automatically open the generated HTML map in default web browser")
 	jsonOnlyFlag := flag.Bool("json", false, "Output strictly raw JSON to stdout")
 
 	flag.Parse()
@@ -49,7 +50,7 @@ func main() {
 
 	if !*jsonOnlyFlag {
 		fmt.Print(banner)
-		fmt.Printf("[*] Iniciando rastreo y multilateración sobre objetivo: %s\n\n", *ipFlag)
+		fmt.Printf("[*] Iniciando rastreo y multilateración sobre objetivo: \033[1;36m%s\033[0m\n\n", *ipFlag)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
@@ -57,7 +58,7 @@ func main() {
 
 	// 1. Reconnaissance & BGP Classification
 	if !*jsonOnlyFlag {
-		fmt.Println("[+] Paso 1/3: Reconocimiento de BGP, ASN e infraestructura...")
+		fmt.Println("[+] Paso 1/3: Reconocimiento BGP, ASN e infraestructura...")
 	}
 	reconInfo, err := recon.QueryIP(ctx, *ipFlag)
 	if err != nil {
@@ -65,29 +66,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !*jsonOnlyFlag {
-		fmt.Printf("    • ASN: AS%d (%s)\n", reconInfo.ASN, reconInfo.ASOrg)
-		fmt.Printf("    • País/ISP: %s / %s\n", reconInfo.Country, reconInfo.ISP)
-		if reconInfo.Hostname != "" {
-			fmt.Printf("    • Hostname PTR: %s\n", reconInfo.Hostname)
-		}
-		if reconInfo.AirportCode != "" {
-			fmt.Printf("    • IATA Metro Code detectado: %s\n", reconInfo.AirportCode)
-		}
-		fmt.Printf("    • Clasificación de Red: [%s]\n", reconInfo.Confidence)
-	}
-
 	// 2. Multilateration Probing (CBG)
 	if !*jsonOnlyFlag {
-		fmt.Println("\n[+] Paso 2/3: Ejecutando sondas de retardo (RTT) desde red de landmarks...")
+		fmt.Println("[+] Paso 2/3: Ejecutando sondas de retardo (RTT) desde red de landmarks...")
 	}
 
 	ports := parsePorts(*portsFlag)
 	activeLandmarks := multilat.MultiProbeExecution(ctx, *ipFlag, multilat.DefaultVantageLandmarks, *samplesFlag)
 
-	// If local active probes have high latency or are limited, calibrate with BGP fallback landmarks
+	// Fallback calibration probe if needed
 	if len(activeLandmarks) == 0 {
-		// Fallback calibration probe
 		minRTT, _, probeErr := multilat.ProbeTarget(ctx, *ipFlag, ports, *samplesFlag)
 		if probeErr == nil && minRTT > 0 {
 			activeLandmarks = append(activeLandmarks, multilat.Landmark{
@@ -115,26 +103,11 @@ func main() {
 		}
 	}
 
-	if !*jsonOnlyFlag {
-		fmt.Printf("    • Sondas con respuesta: %d landmarks\n", len(activeLandmarks))
-		for _, lm := range activeLandmarks {
-			fmt.Printf("      - %s (%s): RTT Mínimo = %.2f ms | Radio Máximo CBG = %.0f km\n",
-				lm.Name, lm.City, lm.MinRTT, lm.MaxRadius)
-		}
-		fmt.Printf("    • Coordenadas Físicas Estimadas: %.4f, %.4f (Radio de Confianza: ±%.1f km)\n",
-			multiResult.EstimatedPoint.Lat, multiResult.EstimatedPoint.Lon, multiResult.ConfidenceKm)
-	}
-
 	// 3. Tunnel & Encapsulation Timing Differential
 	if !*jsonOnlyFlag {
-		fmt.Println("\n[+] Paso 3/3: Análisis de Túneles, MTU y diferencial L4/L7...")
+		fmt.Println("[+] Paso 3/3: Análisis de Túneles, MTU y diferencial L4/L7...")
 	}
 	tunnelResult, _ := tunnel.AnalyzeTunnel(ctx, *ipFlag, *l7URLFlag)
-	if !*jsonOnlyFlag && tunnelResult != nil {
-		for _, finding := range tunnelResult.Findings {
-			fmt.Printf("    • %s\n", finding)
-		}
-	}
 
 	// Build Full Report
 	fullReport := &report.FullScanReport{
@@ -145,11 +118,20 @@ func main() {
 		TunnelAnalysis:  tunnelResult,
 	}
 
+	// Print Terminal Summary
+	if !*jsonOnlyFlag {
+		report.PrintTerminalSummary(fullReport)
+	}
+
 	// Generate Map
 	if *mapHTMLFlag != "" && multiResult.EstimatedPoint.Lat != 0 {
 		if err := report.GenerateHTMLMap(fullReport, *mapHTMLFlag); err == nil {
 			if !*jsonOnlyFlag {
-				fmt.Printf("\n[✓] Mapa interactivo generado en: %s\n", *mapHTMLFlag)
+				fmt.Printf("[✓] Mapa interactivo generado en: \033[1;32m%s\033[0m (OpenStreetMap - Sin requerir API Key)\n", *mapHTMLFlag)
+			}
+			if *openBrowserFlag && !*jsonOnlyFlag {
+				_ = report.OpenInBrowser(*mapHTMLFlag)
+				fmt.Println("[🚀] Mapa abierto automáticamente en tu navegador predeterminado.")
 			}
 		}
 	}
@@ -166,8 +148,6 @@ func main() {
 	if *jsonOnlyFlag {
 		data, _ := json.MarshalIndent(fullReport, "", "  ")
 		fmt.Println(string(data))
-	} else {
-		fmt.Println("\n[✓] Rastreo completado con éxito.")
 	}
 }
 
