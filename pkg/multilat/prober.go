@@ -96,13 +96,14 @@ func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (floa
 }
 
 // PerformMultiVantageProbing performs active local CBG constraint + route hop discovery
-func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, samples int, registryLat, registryLon float64, metroCode string) ([]Landmark, Point, float64) {
+func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, samples int, registryLat, registryLon float64, metroCode string, isAnycast bool) ([]Landmark, Point, float64) {
 	landmarks := make([]Landmark, 0)
 
 	// 1. Measure direct RTT from local operator vantage point
 	minRTT, _, err := ProbeTarget(ctx, ip, ports, samples)
+	var localRadius float64
 	if err == nil && minRTT > 0 {
-		radius := ConstraintRadiusFromRTT(minRTT)
+		localRadius = ConstraintRadiusFromRTT(minRTT)
 		landmarks = append(landmarks, Landmark{
 			ID:        "LOCAL-VANTAGE",
 			Name:      "Operador Local (Vantage Node)",
@@ -110,13 +111,13 @@ func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, sam
 			Country:   "ES",
 			Location:  DefaultLocalVantage,
 			MinRTT:    minRTT,
-			MaxRadius: radius,
+			MaxRadius: localRadius,
 			Samples:   samples,
 			Type:      "local_vantage",
 		})
 	}
 
-	// 2. Discover intermediate route landmarks (e.g. Metro POP / Airport code in PTR or DNS)
+	// 2. Discover intermediate route landmarks (e.g. Metro POP / Airport code in PTR)
 	if metroCode != "" {
 		if pt, exists := knownMetroHubs[strings.ToUpper(metroCode)]; exists {
 			landmarks = append(landmarks, Landmark{
@@ -134,55 +135,56 @@ func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, sam
 	}
 
 	// 3. Anchor with BGP Registry / Geolocation if available
-	if registryLat != 0 || registryLon != 0 {
-		landmarks = append(landmarks, Landmark{
-			ID:        "BGP-ANCHOR",
-			Name:      "BGP Origin Datacenter",
-			City:      "Datacenter",
-			Country:   "",
-			Location:  Point{Lat: registryLat, Lon: registryLon},
-			MinRTT:    math.Max(1.0, minRTT*0.8),
-			MaxRadius: math.Max(30.0, ConstraintRadiusFromRTT(minRTT)),
-			Samples:   samples,
-			Type:      "bgp_anchor",
-		})
-	}
+	hasRegistryCoords := (registryLat != 0 || registryLon != 0)
+	if hasRegistryCoords {
+		targetPt := Point{Lat: registryLat, Lon: registryLon}
+		distToLocal := DistanceHaversine(DefaultLocalVantage, targetPt)
 
-	// 4. Calculate best estimated point
-	var estPoint Point
-	var confidence float64
+		// Check speed of light in fiber constraint:
+		// If local ping is e.g. 7ms (radius 700km) but registry says USA (6000km), it's Anycast edge POP in Europe!
+		if localRadius > 0 && distToLocal > localRadius*1.3 {
+			// Speed of light physical violation -> Anycast Edge Node
+			landmarks = append(landmarks, Landmark{
+				ID:        "BGP-ORIGIN",
+				Name:      "BGP Origin Registry (Anycast Parent)",
+				City:      "Datacenter",
+				Country:   "",
+				Location:  targetPt,
+				MinRTT:    minRTT,
+				MaxRadius: math.Max(100.0, distToLocal),
+				Samples:   samples,
+				Type:      "bgp_anchor",
+			})
 
-	if len(landmarks) > 0 {
-		// If BGP / Metro hop is within local CBG radius, target is confirmed at the anchor
-		if (registryLat != 0 || registryLon != 0) && len(landmarks) >= 2 {
-			bgpPt := Point{Lat: registryLat, Lon: registryLon}
-			distToLocal := DistanceHaversine(DefaultLocalVantage, bgpPt)
-			localMaxRadius := landmarks[0].MaxRadius
-
-			if distToLocal <= localMaxRadius*1.2 {
-				// Target conforms to physical fiber constraints
-				estPoint = bgpPt
-				confidence = math.Max(15.0, minRTT*5.0)
-			} else {
-				// Solve constraint intersection
-				res := SolveCentroidLeastSquares(landmarks)
-				estPoint = res.EstimatedPoint
-				confidence = res.ConfidenceKm
-			}
-		} else {
-			res := SolveCentroidLeastSquares(landmarks)
-			estPoint = res.EstimatedPoint
-			confidence = res.ConfidenceKm
+			// Target physical active server is the local edge POP serving the request
+			estPoint := DefaultLocalVantage
+			confidence := math.Max(20.0, localRadius*0.5)
+			return landmarks, estPoint, confidence
 		}
-	} else if registryLat != 0 || registryLon != 0 {
-		estPoint = Point{Lat: registryLat, Lon: registryLon}
-		confidence = 50.0
-	} else {
-		estPoint = DefaultLocalVantage
-		confidence = 100.0
+
+		// Valid physical target matching speed of light
+		landmarks = append(landmarks, Landmark{
+			ID:        "TARGET-LOCATION",
+			Name:      "Target Host Location",
+			City:      "Target",
+			Country:   "",
+			Location:  targetPt,
+			MinRTT:    minRTT,
+			MaxRadius: math.Max(25.0, minRTT*5.0),
+			Samples:   samples,
+			Type:      "target_location",
+		})
+
+		return landmarks, targetPt, math.Max(15.0, minRTT*4.0)
 	}
 
-	return landmarks, estPoint, confidence
+	// 4. Fallback solver if no registry coordinates were available
+	if len(landmarks) > 0 {
+		res := SolveCentroidLeastSquares(landmarks)
+		return landmarks, res.EstimatedPoint, res.ConfidenceKm
+	}
+
+	return landmarks, DefaultLocalVantage, 100.0
 }
 
 func isConnectionRefused(err error) bool {

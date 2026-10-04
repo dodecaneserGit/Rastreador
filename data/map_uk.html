@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador - Geolocalización de IP [8.8.8.8]</title>
+    <title>Rastreador - Geolocalización de IP [185.86.151.11]</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -35,21 +35,21 @@
     <div class="dashboard-card">
         <div class="title">🎯 Rastreador IP Matrix</div>
         <div class="badge badge-cloud">DATACENTER_EXIT</div>
-        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">8.8.8.8</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS15169 (GOOGLE - Google LLC, US)</span></div>
-        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">US / GOOGLE - Google LLC, US</span></div>
-        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.4168, -3.7038</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±735.4 km</span></div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">185.86.151.11</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS43513 (Yourserver SE)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">United Kingdom / Sia Nano IT</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">51.5426, -0.2449</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±15.0 km</span></div>
         <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
-        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.4168,-3.7038" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=51.5426,-0.2449" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
 
     <script>
-        const estLat = 40.416800;
-        const estLon = -3.703800;
-        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":7.354,"max_radius_km":735.4,"samples":5,"type":"local_vantage"}];
-        const reconData = {"ip":"8.8.8.8","hostname":"dns.google","asn":15169,"as_org":"GOOGLE - Google LLC, US","country":"US","isp":"GOOGLE - Google LLC, US","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: dns.google","Cloud/Datacenter provider match: 'google'"]};
+        const estLat = 51.542600;
+        const estLon = -0.244900;
+        const landmarks = [{"id":"TARGET-LOCATION","name":"Target Host Location","city":"Target","country":"","location":{"lat":51.5426,"lon":-0.2449},"min_rtt_ms":0,"max_radius_km":25,"samples":5,"type":"target_location"}];
+        const reconData = {"ip":"185.86.151.11","hostname":"slot0.edgewill.tk","asn":43513,"as_org":"Yourserver SE","country":"United Kingdom","country_code":"GB","region":"England","city":"Harlesden","latitude":51.5426,"longitude":-0.2449,"isp":"Sia Nano IT","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: slot0.edgewill.tk","Cloud/Datacenter provider match: 'yourserver'"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
         const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 735.400000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 15.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 735.400000 * 1000
+            radius: 15.000000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles

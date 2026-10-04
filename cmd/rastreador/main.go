@@ -74,9 +74,9 @@ func main() {
 	}
 
 	ports := parsePorts(*portsFlag)
-	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode)
+	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode, reconInfo.IsAnycast)
 
-	// Query RIPE Atlas if API key is provided or to fetch public distributed measurements
+	// Query RIPE Atlas if API key is provided
 	ripeClient := multilat.NewRIPEAtlasClient(*ripeKeyFlag)
 	if ripeClient.APIKey != "" {
 		if !*jsonOnlyFlag {
@@ -88,24 +88,11 @@ func main() {
 				fmt.Printf("    • Recibidas %d respuestas de sondas RIPE Atlas en todo el mundo.\n", len(ripeLandmarks))
 			}
 			landmarks = append(landmarks, ripeLandmarks...)
-			// Re-solve coordinates with the distributed global dataset
 			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
 			estPoint = multiSolverRes.EstimatedPoint
 			confidence = multiSolverRes.ConfidenceKm
 		} else if !*jsonOnlyFlag && err != nil {
 			fmt.Printf("    • [!] Nota RIPE Atlas: %v\n", err)
-		}
-	} else {
-		// Try fetching public historical RIPE measurements if available
-		publicLandmarks, err := ripeClient.FetchPublicMeasurements(ctx, *ipFlag)
-		if err == nil && len(publicLandmarks) > 0 {
-			if !*jsonOnlyFlag {
-				fmt.Printf("    • Incorporadas %d sondas históricas públicas de RIPE Atlas.\n", len(publicLandmarks))
-			}
-			landmarks = append(landmarks, publicLandmarks...)
-			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
-			estPoint = multiSolverRes.EstimatedPoint
-			confidence = multiSolverRes.ConfidenceKm
 		}
 	}
 
