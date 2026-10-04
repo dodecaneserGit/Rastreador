@@ -1,0 +1,182 @@
+{
+  "target_ip": "1.1.1.1",
+  "timestamp": "2026-10-04T00:11:23Z",
+  "recon_info": {
+    "ip": "1.1.1.1",
+    "hostname": "one.one.one.one",
+    "asn": 13335,
+    "as_org": "CLOUDFLARENET - Cloudflare, Inc., US",
+    "country": "AU",
+    "isp": "CLOUDFLARENET - Cloudflare, Inc., US",
+    "is_cloud": true,
+    "is_vpn": false,
+    "is_proxy": false,
+    "is_tor_exit": false,
+    "is_anycast": false,
+    "confidence": "DATACENTER_EXIT",
+    "indicators": [
+      "PTR: one.one.one.one",
+      "Cloud/Datacenter provider match: 'cloudflare'"
+    ]
+  },
+  "multilateration": {
+    "estimated_point": {
+      "lat": 69.02120945263974,
+      "lon": 39.77558164599887
+    },
+    "confidence_radius_km": 5698.417667319205,
+    "used_landmarks": [
+      {
+        "id": "SIN-SG",
+        "name": "Singapore Landmark",
+        "city": "Singapore",
+        "country": "SG",
+        "location": {
+          "lat": 1.3521,
+          "lon": 103.8198
+        },
+        "min_rtt_ms": 10.801,
+        "max_radius_km": 1080.1,
+        "samples": 5
+      },
+      {
+        "id": "FRA-DE",
+        "name": "Frankfurt Landmark",
+        "city": "Frankfurt",
+        "country": "DE",
+        "location": {
+          "lat": 50.1109,
+          "lon": 8.6821
+        },
+        "min_rtt_ms": 8.205,
+        "max_radius_km": 820.5,
+        "samples": 5
+      },
+      {
+        "id": "AMS-NL",
+        "name": "Amsterdam Landmark",
+        "city": "Amsterdam",
+        "country": "NL",
+        "location": {
+          "lat": 52.3676,
+          "lon": 4.9041
+        },
+        "min_rtt_ms": 10.764,
+        "max_radius_km": 1076.3999999999999,
+        "samples": 5
+      },
+      {
+        "id": "PAR-FR",
+        "name": "Paris Landmark",
+        "city": "Paris",
+        "country": "FR",
+        "location": {
+          "lat": 48.8566,
+          "lon": 2.3522
+        },
+        "min_rtt_ms": 13.527,
+        "max_radius_km": 1352.6999999999998,
+        "samples": 5
+      },
+      {
+        "id": "MAD-ES",
+        "name": "Madrid Landmark",
+        "city": "Madrid",
+        "country": "ES",
+        "location": {
+          "lat": 40.4168,
+          "lon": -3.7038
+        },
+        "min_rtt_ms": 13.432,
+        "max_radius_km": 1343.2,
+        "samples": 5
+      },
+      {
+        "id": "NYC-US",
+        "name": "New York Landmark",
+        "city": "New York",
+        "country": "US",
+        "location": {
+          "lat": 40.7128,
+          "lon": -74.006
+        },
+        "min_rtt_ms": 13.245,
+        "max_radius_km": 1324.5,
+        "samples": 5
+      },
+      {
+        "id": "GRU-BR",
+        "name": "Sao Paulo Landmark",
+        "city": "Sao Paulo",
+        "country": "BR",
+        "location": {
+          "lat": -23.5505,
+          "lon": -46.6333
+        },
+        "min_rtt_ms": 13.199,
+        "max_radius_km": 1319.9,
+        "samples": 5
+      },
+      {
+        "id": "TYO-JP",
+        "name": "Tokyo Landmark",
+        "city": "Tokyo",
+        "country": "JP",
+        "location": {
+          "lat": 35.6762,
+          "lon": 139.6503
+        },
+        "min_rtt_ms": 13.489,
+        "max_radius_km": 1348.9,
+        "samples": 5
+      },
+      {
+        "id": "SYD-AU",
+        "name": "Sydney Landmark",
+        "city": "Sydney",
+        "country": "AU",
+        "location": {
+          "lat": -33.8688,
+          "lon": 151.2093
+        },
+        "min_rtt_ms": 13.881,
+        "max_radius_km": 1388.1,
+        "samples": 5
+      },
+      {
+        "id": "LON-UK",
+        "name": "London Landmark",
+        "city": "London",
+        "country": "GB",
+        "location": {
+          "lat": 51.5074,
+          "lon": -0.1278
+        },
+        "min_rtt_ms": 13.594,
+        "max_radius_km": 1359.3999999999999,
+        "samples": 5
+      },
+      {
+        "id": "SFO-US",
+        "name": "San Francisco Landmark",
+        "city": "San Francisco",
+        "country": "US",
+        "location": {
+          "lat": 37.7749,
+          "lon": -122.4194
+        },
+        "min_rtt_ms": 10.84,
+        "max_radius_km": 1084,
+        "samples": 5
+      }
+    ]
+  },
+  "tunnel_analysis": {
+    "target_ip": "1.1.1.1",
+    "l4_tcp_rtt_ms": 7.994,
+    "has_tunnel_overhead": false,
+    "findings": [
+      "Baseline L4 SYN-ACK RTT: 7.99 ms"
+    ]
+  }
+}
