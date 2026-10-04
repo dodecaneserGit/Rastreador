@@ -76,16 +76,20 @@ func main() {
 	ports := parsePorts(*portsFlag)
 	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode, reconInfo.IsAnycast)
 
-	// Query RIPE Atlas if API key is provided
+	// Query RIPE Atlas if API key is provided, found in env, or in ~/.zshrc
 	ripeClient := multilat.NewRIPEAtlasClient(*ripeKeyFlag)
 	if ripeClient.APIKey != "" {
 		if !*jsonOnlyFlag {
-			fmt.Printf("    • Solicitando %d sondas globales a la API de RIPE Atlas...\n", *ripeProbesFlag)
+			maskedKey := ripeClient.APIKey
+			if len(maskedKey) > 8 {
+				maskedKey = maskedKey[:4] + "..." + maskedKey[len(maskedKey)-4:]
+			}
+			fmt.Printf("    • [✓] Clave RIPE Atlas detectada (%s). Solicitando %d sondas globales...\n", maskedKey, *ripeProbesFlag)
 		}
 		ripeLandmarks, err := ripeClient.RunRIPEAtlasProbing(ctx, *ipFlag, *ripeProbesFlag)
 		if err == nil && len(ripeLandmarks) > 0 {
 			if !*jsonOnlyFlag {
-				fmt.Printf("    • Recibidas %d respuestas de sondas RIPE Atlas en todo el mundo.\n", len(ripeLandmarks))
+				fmt.Printf("    • [✓] Recibidas %d respuestas de sondas RIPE Atlas en tiempo real.\n", len(ripeLandmarks))
 			}
 			landmarks = append(landmarks, ripeLandmarks...)
 			multiSolverRes := multilat.SolveCentroidLeastSquares(landmarks)
@@ -93,6 +97,10 @@ func main() {
 			confidence = multiSolverRes.ConfidenceKm
 		} else if !*jsonOnlyFlag && err != nil {
 			fmt.Printf("    • [!] Nota RIPE Atlas: %v\n", err)
+		}
+	} else {
+		if !*jsonOnlyFlag {
+			fmt.Println("    • [ℹ] Sin clave RIPE Atlas (ejecutando con nodo local y BGP).")
 		}
 	}
 

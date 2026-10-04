@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,17 +20,46 @@ type RIPEAtlasClient struct {
 	HTTPClient *http.Client
 }
 
-// NewRIPEAtlasClient creates a client configured with API key if provided
+// NewRIPEAtlasClient creates a client configured with API key if provided, env var, or zshrc
 func NewRIPEAtlasClient(apiKey string) *RIPEAtlasClient {
 	if apiKey == "" {
 		apiKey = os.Getenv("RIPE_ATLAS_KEY")
 	}
+	if apiKey == "" {
+		apiKey = findKeyInConfigFiles()
+	}
 	return &RIPEAtlasClient{
 		APIKey: apiKey,
 		HTTPClient: &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: 20 * time.Second,
 		},
 	}
+}
+
+func findKeyInConfigFiles() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	files := []string{
+		filepath.Join(home, ".zshrc"),
+		filepath.Join(home, ".bashrc"),
+		filepath.Join(home, ".bash_profile"),
+		filepath.Join(home, ".config", "rastreador", "config.env"),
+	}
+
+	keyRegex := regexp.MustCompile(`(?i)(?:export\s+)?RIPE_ATLAS_KEY=["']?([a-f0-9\-]{30,})["']?`)
+
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err == nil {
+			matches := keyRegex.FindStringSubmatch(string(data))
+			if len(matches) > 1 {
+				return strings.TrimSpace(matches[1])
+			}
+		}
+	}
+	return ""
 }
 
 type ripeMeasurementRequest struct {

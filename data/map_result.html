@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador - Geolocalización de IP [138.201.0.1]</title>
+    <title>Rastreador - Geolocalización de IP [9.9.9.9]</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -34,22 +34,22 @@
 <body>
     <div class="dashboard-card">
         <div class="title">🎯 Rastreador IP Matrix</div>
-        <div class="badge badge-cloud">DATACENTER_EXIT</div>
-        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">138.201.0.1</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS24940 (Hetzner)</span></div>
-        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Germany / Hetzner Online GmbH</span></div>
-        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">50.4777, 12.3649</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±15.0 km</span></div>
-        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
-        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=50.4777,12.3649" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+        <div class="badge badge-cloud">BGP_ANYCAST_EDGE</div>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">9.9.9.9</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS19281 (Quad9)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">United States / Quad9</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.4168, -3.7038</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±434.3 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">2 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.4168,-3.7038" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
 
     <script>
-        const estLat = 50.477700;
-        const estLon = 12.364900;
-        const landmarks = [{"id":"TARGET-LOCATION","name":"Target Host Location","city":"Target","country":"","location":{"lat":50.4777,"lon":12.3649},"min_rtt_ms":0,"max_radius_km":25,"samples":5,"type":"target_location"}];
-        const reconData = {"ip":"138.201.0.1","hostname":"static.1.0.201.138.clients.your-server.de","asn":24940,"as_org":"Hetzner","country":"Germany","country_code":"DE","region":"Saxony","city":"Falkenstein","latitude":50.4777,"longitude":12.3649,"isp":"Hetzner Online GmbH","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"DATACENTER_EXIT","indicators":["PTR: static.1.0.201.138.clients.your-server.de","Cloud/Datacenter provider match: 'hetzner'"]};
+        const estLat = 40.416800;
+        const estLon = -3.703800;
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":8.687,"max_radius_km":868.6999999999999,"samples":5,"type":"local_vantage"},{"id":"BGP-ORIGIN","name":"BGP Origin Registry (Anycast Parent)","city":"Datacenter","country":"","location":{"lat":37.8806,"lon":-122.268},"min_rtt_ms":8.687,"max_radius_km":9300.40437690113,"samples":5,"type":"bgp_anchor"}];
+        const reconData = {"ip":"9.9.9.9","hostname":"dns9.quad9.net","asn":19281,"as_org":"Quad9","country":"United States","country_code":"US","region":"California","city":"Berkeley","latitude":37.8806,"longitude":-122.268,"isp":"Quad9","is_cloud":true,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":true,"confidence":"BGP_ANYCAST_EDGE","indicators":["PTR: dns9.quad9.net","BGP Anycast detected: Quad9 Anycast DNS"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
         const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 15.000000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 434.350000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 15.000000 * 1000
+            radius: 434.350000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles
