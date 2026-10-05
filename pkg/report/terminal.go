@@ -22,6 +22,9 @@ func PrintTerminalSummary(rep *FullScanReport) {
 	if recon.Country != "" || recon.City != "" {
 		fmt.Printf("    • País / Ciudad Reg.  : %s / %s\n", recon.Country, recon.City)
 	}
+	if recon.Facility != "" {
+		fmt.Printf("    • Campus / Facilidad  : \033[1;32m%s\033[0m\n", recon.Facility)
+	}
 	if recon.AirportCode != "" {
 		fmt.Printf("    • Metro Code (IATA)   : %s\n", recon.AirportCode)
 	}

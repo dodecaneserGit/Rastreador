@@ -74,7 +74,7 @@ func main() {
 	}
 
 	ports := parsePorts(*portsFlag)
-	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.AirportCode, reconInfo.IsAnycast)
+	landmarks, estPoint, confidence := multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.PrecisionKm, reconInfo.AirportCode, reconInfo.IsAnycast)
 
 	// Query RIPE Atlas if API key is provided, found in env, or in ~/.zshrc
 	ripeClient := multilat.NewRIPEAtlasClient(*ripeKeyFlag)

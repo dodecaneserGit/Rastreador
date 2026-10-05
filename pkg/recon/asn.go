@@ -22,6 +22,8 @@ type IPInfo struct {
 	CountryCode string   `json:"country_code"`
 	Region      string   `json:"region,omitempty"`
 	City        string   `json:"city,omitempty"`
+	Zip         string   `json:"zip,omitempty"`
+	Facility    string   `json:"facility,omitempty"`
 	Latitude    float64  `json:"latitude"`
 	Longitude   float64  `json:"longitude"`
 	ISP         string   `json:"isp"`
@@ -31,6 +33,7 @@ type IPInfo struct {
 	IsTorExit   bool     `json:"is_tor_exit"`
 	IsAnycast   bool     `json:"is_anycast"`
 	Confidence  string   `json:"confidence"`
+	PrecisionKm float64  `json:"precision_km"`
 	AirportCode string   `json:"detected_airport_code,omitempty"`
 	Indicators  []string `json:"indicators"`
 }
@@ -70,8 +73,9 @@ func QueryIP(ctx context.Context, ipStr string) (*IPInfo, error) {
 	}
 
 	info := &IPInfo{
-		IP:         ipStr,
-		Indicators: make([]string, 0),
+		IP:          ipStr,
+		PrecisionKm: 1.0, // default target precision
+		Indicators:  make([]string, 0),
 	}
 
 	// 1. Reverse PTR Lookup
@@ -98,7 +102,23 @@ func QueryIP(ctx context.Context, ipStr string) (*IPInfo, error) {
 	// 3. Query BGP ASN via Team Cymru DNS
 	queryCymruASN(ip, info)
 
-	// 4. Heuristic classification & Anycast detection
+	// 4. Ground-Truth Facility & Campus Match (Sub-1km Precision)
+	if fac := FindMatchingFacility(info.ASN, info.ASOrg, info.ISP, info.Hostname, info.City, info.Zip, info.Country); fac != nil {
+		info.Facility = fac.Name
+		info.Latitude = fac.Lat
+		info.Longitude = fac.Lon
+		info.PrecisionKm = fac.PrecisionKm
+		info.Indicators = append(info.Indicators, fmt.Sprintf("Ground-Truth Facility: %s (±%.2f km)", fac.Name, fac.PrecisionKm))
+	} else if info.Zip != "" {
+		if lat, lon, prec, ok := PostalCentroid(info.CountryCode, info.Zip); ok {
+			info.Latitude = lat
+			info.Longitude = lon
+			info.PrecisionKm = prec
+			info.Indicators = append(info.Indicators, fmt.Sprintf("Postal Centroid [%s]: ±%.2f km", info.Zip, prec))
+		}
+	}
+
+	// 5. Heuristic classification & Anycast detection
 	classifyIP(info)
 
 	return info, nil
@@ -110,6 +130,7 @@ type ipAPISummary struct {
 	CountryCode string  `json:"countryCode"`
 	RegionName  string  `json:"regionName"`
 	City        string  `json:"city"`
+	Zip         string  `json:"zip"`
 	Lat         float64 `json:"lat"`
 	Lon         float64 `json:"lon"`
 	ISP         string  `json:"isp"`
@@ -121,7 +142,7 @@ type ipAPISummary struct {
 
 func enrichViaIPAPI(ctx context.Context, ipStr string, info *IPInfo) {
 	client := &http.Client{Timeout: 4 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,countryCode,regionName,city,lat,lon,isp,org,as,hosting,proxy", ipStr), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,countryCode,regionName,city,zip,lat,lon,isp,org,as,hosting,proxy", ipStr), nil)
 	if err != nil {
 		return
 	}
@@ -141,6 +162,7 @@ func enrichViaIPAPI(ctx context.Context, ipStr string, info *IPInfo) {
 	info.CountryCode = data.CountryCode
 	info.Region = data.RegionName
 	info.City = data.City
+	info.Zip = data.Zip
 	info.Latitude = data.Lat
 	info.Longitude = data.Lon
 

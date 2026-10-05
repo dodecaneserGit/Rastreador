@@ -96,7 +96,7 @@ func ProbeTarget(ctx context.Context, ip string, ports []int, samples int) (floa
 }
 
 // PerformMultiVantageProbing performs active local CBG constraint + route hop discovery
-func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, samples int, registryLat, registryLon float64, metroCode string, isAnycast bool) ([]Landmark, Point, float64) {
+func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, samples int, registryLat, registryLon, precisionKm float64, metroCode string, isAnycast bool) ([]Landmark, Point, float64) {
 	landmarks := make([]Landmark, 0)
 
 	// 1. Measure direct RTT from local operator vantage point
@@ -134,7 +134,7 @@ func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, sam
 		}
 	}
 
-	// 3. Anchor with physical Geolocation / Datacenter if available
+	// 3. Anchor with physical Geolocation / Facility / Campus if available
 	hasRegistryCoords := (registryLat != 0 || registryLon != 0)
 	if hasRegistryCoords {
 		targetPt := Point{Lat: registryLat, Lon: registryLon}
@@ -148,9 +148,11 @@ func PerformMultiVantageProbing(ctx context.Context, ip string, ports []int, sam
 			return landmarks, estPoint, confidence
 		}
 
-		// For standard Unicast hosts (e.g. Salamanca, Falkenstein, Tokyo, London):
-		// Target position is confirmed at the datacenter/host location
-		confidence := 15.0 // Precision ±15 km
+		// For standard Unicast hosts with ground-truth facility / campus / postal or CBG:
+		confidence := precisionKm
+		if confidence <= 0 {
+			confidence = 0.8 // Default sub-1km precision
+		}
 
 		return landmarks, targetPt, confidence
 	}
