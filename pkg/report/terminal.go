@@ -54,6 +54,24 @@ func PrintTerminalSummary(rep *FullScanReport) {
 		}
 	}
 
+	if rep.IPIDAnalysis != nil && len(rep.IPIDAnalysis.Findings) > 0 {
+		ipidRes := rep.IPIDAnalysis
+		fmt.Println("\n  ⏱️  DINÁMICA DE RELOJ IP-ID Y VELOCIDAD DE PAQUETES (RFC 6864):")
+		fmt.Printf("    • Algoritmo de Kernel : \033[1;33m[%s]\033[0m\n", ipidRes.GenerationType)
+		if ipidRes.VelocityPacketsPerSec > 0 {
+			fmt.Printf("    • Velocidad de Emisión: \033[1;36m%.1f paquetes/segundo\033[0m (Linealidad R² = %.3f)\n", ipidRes.VelocityPacketsPerSec, ipidRes.LinearityScore)
+		}
+		if ipidRes.ClockFrequencyHz > 0 {
+			fmt.Printf("    • Frecuencia TCP TS   : \033[1;32m%.0f Hz\033[0m\n", ipidRes.ClockFrequencyHz)
+		}
+		if ipidRes.CorrelationFingerprint != "" {
+			fmt.Printf("    • Huella de Hardware  : \033[1;35m[HW-%s]\033[0m (Persistente ante salto de VPN)\n", ipidRes.CorrelationFingerprint)
+		}
+		for _, f := range ipidRes.Findings {
+			fmt.Printf("    • %s\n", f)
+		}
+	}
+
 	if rep.WiFiTriangulation != nil && rep.WiFiTriangulation.ResolvedCount > 0 {
 		wifi := rep.WiFiTriangulation
 		fmt.Println("\n  📶 MICRO-LOCALIZACIÓN L2 WI-FI (WIGLE TRILATERATION):")

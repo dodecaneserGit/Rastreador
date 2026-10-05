@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dodecaneser/rastreador/pkg/ipid"
 	"github.com/dodecaneser/rastreador/pkg/l2wifi"
 	"github.com/dodecaneser/rastreador/pkg/multilat"
 	"github.com/dodecaneser/rastreador/pkg/recon"
@@ -68,6 +69,7 @@ func main() {
 	var landmarks []multilat.Landmark
 	var estPoint multilat.Point
 	var confidence float64 = 25.0
+	ports := parsePorts(*portsFlag)
 
 	// 1. Reconnaissance & BGP Classification (if IP is provided)
 	if *ipFlag != "" {
@@ -86,7 +88,6 @@ func main() {
 			fmt.Println("[+] Paso 2/3: Ejecutando sondeo de retardo RTT y multilateración multi-nodo...")
 		}
 
-		ports := parsePorts(*portsFlag)
 		landmarks, estPoint, confidence = multilat.PerformMultiVantageProbing(ctx, *ipFlag, ports, *samplesFlag, reconInfo.Latitude, reconInfo.Longitude, reconInfo.PrecisionKm, reconInfo.AirportCode, reconInfo.IsAnycast)
 
 		// Query RIPE Atlas if API key is provided, found in env, or in ~/.zshrc
@@ -135,14 +136,20 @@ func main() {
 
 	// 3. Tunnel & Encapsulation Timing Differential
 	var tunnelResult *tunnel.TunnelAnalysis
+	var ipidResult *ipid.IPIDAnalysisResult
 	if *ipFlag != "" {
 		if !*jsonOnlyFlag {
-			fmt.Println("[+] Paso 3/3: Análisis de Túneles, MTU y diferencial L4/L7...")
+			fmt.Println("[+] Paso 3/4: Análisis de Túneles, MTU y diferencial L4/L7...")
 		}
 		tunnelResult, _ = tunnel.AnalyzeTunnel(ctx, *ipFlag, *l7URLFlag)
+
+		if !*jsonOnlyFlag {
+			fmt.Println("[+] Paso 4/4: Medición de velocidad de reloj IP-ID y firma de hardware (RFC 6864)...")
+		}
+		ipidResult, _ = ipid.AnalyzeIPID(ctx, *ipFlag, ports, *samplesFlag)
 	}
 
-	// 4. L2 Wi-Fi Micro-Triangulation (<30m) via WiGLE
+	// 5. L2 Wi-Fi Micro-Triangulation (<30m) via WiGLE
 	var wifiTriResult *l2wifi.TriangulationResult
 	if *bssidFlag != "" || *scanWiFiFlag {
 		if !*jsonOnlyFlag {
@@ -205,6 +212,7 @@ func main() {
 		ReconInfo:         reconInfo,
 		Multilateration:   &multiResult,
 		TunnelAnalysis:    tunnelResult,
+		IPIDAnalysis:      ipidResult,
 		WiFiTriangulation: wifiTriResult,
 	}
 

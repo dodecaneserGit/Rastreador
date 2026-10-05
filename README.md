@@ -22,20 +22,27 @@
    - Catálogo integrado de coordenadas geodésicas de más de 100 instalaciones universitarias, centros de supercomputación, laboratorios de investigación y datacenters globales.
    - Resolución de micro-centroides postales en distritos urbanos con precisión física **$\le \pm 1.0\text{ km}$** (nivel campus, edificio y centro de datos).
 
-4. **Integración Global con RIPE Atlas (Sondas Distribuidas Mundiales)**:
+4. **Mapeo de Centrales Telefónicas Locales y Puntos de Agregación BAP/RIMA**:
+   - Asignación de subredes residenciales dinámicas a las centrales de conmutación telefónica físicas (Tetuán, Chamberí, Goya, Delicias, Eixample, Nervión, etc.) logrando acotar conexiones domésticas al barrio o distrito exacto ($\pm 1.0 - 1.5\text{ km}$).
+
+5. **Integración Global con RIPE Atlas (Sondas Distribuidas Mundiales)**:
    - Conexión nativa con la API v2 de **RIPE Atlas** para lanzar mediciones *one-off* desde sondas reales distribuidas en múltiples continentes (`WW`, `EU`, `NA`, etc.).
    - Recuperación automática de mediciones públicas históricas para IPs de servicios troncales.
 
-5. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
+6. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
    - Medición del delta $\Delta RTT = RTT_{L7} - RTT_{L4}$ para acotar la distancia física real de clientes tras nodos de salida VPN.
    - Detección de sobrecarga de encapsulación (MTU/MSS) y reloj de hardware (*TCP Clock Skew*).
 
-6. **Micro-Localización L2 Wi-Fi y Trilateración WiGLE ($\le 30\text{ metros}$)**:
+7. **Dinámica de Reloj IP-ID y Velocidad de Paquetes (RFC 6864 / RFC 1323)**:
+   - Identificación del algoritmo de generación de identificadores IPv4 en el kernel (Incremental Global, Hash por Host, Aleatorio, Constante Cero).
+   - Generación de la huella digital física única de hardware (`[HW-XXXX]`), persistente e invariable cuando la máquina víctima salta entre diferentes servidores VPN o redes WiFi.
+
+8. **Micro-Localización L2 Wi-Fi y Trilateración WiGLE ($\le 30\text{ metros}$)**:
    - Integración nativa con la API v2 de **WiGLE.net** (+1.450 millones de BSSIDs cartografiados).
    - Trilateración ponderada por señal RSSI (*Weighted Least Squares*) para alcanzar precisión submétrica ($\pm 8 - 25\text{ metros}$, nivel portal, habitación o despacho).
    - Escaneo pasivo automático del entorno radioeléctrico Wi-Fi local en macOS y Linux (`-scan-wifi`).
 
-7. **Visualización en Terminal y Mapas Interactivos**:
+9. **Visualización en Terminal y Mapas Interactivos**:
    - **Salida enriquecida en CLI**: resumen visual con coordenadas, ISP, radio de confianza, dirección postal y enlace directo a Google Maps.
    - **Mapas interactivos HTML (Leaflet.js + Esri ArcGIS)**: capas Satélite, Callejero y Topográfico 100% libres de API keys y compatibles con protocolo `file://`.
    - **Master Map Grid**: mapa global interactivo que representa simultáneamente cientos de objetivos geolocalizados.
