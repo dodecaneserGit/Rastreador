@@ -342,7 +342,7 @@ func scanMacOSAirport() ([]WiFiNetwork, error) {
 	if _, err := os.Stat(airportBin); err == nil {
 		cmd := exec.Command(airportBin, "-s")
 		out, err := cmd.Output()
-		if err == nil {
+		if err == nil && len(out) > 0 {
 			lines := strings.Split(string(out), "\n")
 			if len(lines) >= 2 {
 				macRegex := regexp.MustCompile(`([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})`)
@@ -386,19 +386,31 @@ func scanMacOSAirport() ([]WiFiNetwork, error) {
 		}
 	}
 
-	// Fallback 1: ARP Table default gateway router MAC
-	if gwNets, err := scanGatewayBSSID(); err == nil && len(gwNets) > 0 {
-		return gwNets, nil
-	}
+	return nil, fmt.Errorf("en macOS (Sonoma/Sequoia) Apple restringe el escaneo pasivo por privacidad. Pasa el BSSID del router directamente con: -bssid \"f4:69:42:6a:ae:a0\"")
+}
 
-	return nil, fmt.Errorf("no se pudieron escanear balizas Wi-Fi automáticamente en macOS (pasa los BSSIDs con -bssid \"AA:BB:CC:DD:EE:FF\")")
+func findExec(name string) string {
+	paths := []string{
+		name,
+		"/usr/sbin/" + name,
+		"/sbin/" + name,
+		"/usr/bin/" + name,
+		"/bin/" + name,
+		"/opt/homebrew/bin/" + name,
+	}
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return name
 }
 
 func scanGatewayBSSID() ([]WiFiNetwork, error) {
 	// 1. First get default gateway IP from netstat -rn if possible
 	var gwIP string
-	routeCmd := exec.Command("netstat", "-rn")
-	routeCmd.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
+	netstatBin := findExec("netstat")
+	routeCmd := exec.Command(netstatBin, "-rn")
 	if rOut, err := routeCmd.Output(); err == nil {
 		for _, l := range strings.Split(string(rOut), "\n") {
 			if strings.HasPrefix(strings.TrimSpace(l), "default") {
@@ -412,21 +424,26 @@ func scanGatewayBSSID() ([]WiFiNetwork, error) {
 	}
 
 	// 2. Query arp table (either specific IP or full table)
-	var arpArgs []string
+	arpBin := findExec("arp")
+	var out []byte
+	var err error
+
 	if gwIP != "" {
-		arpArgs = []string{gwIP}
-	} else {
-		arpArgs = []string{"-a"}
+		cmd := exec.Command(arpBin, "-n", gwIP)
+		out, err = cmd.Output()
+		if err != nil || len(out) == 0 {
+			cmd = exec.Command(arpBin, gwIP)
+			out, err = cmd.Output()
+		}
 	}
 
-	arpCmd := exec.Command("arp", arpArgs...)
-	arpCmd.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
-	out, err := arpCmd.Output()
-	if err != nil || len(out) == 0 {
-		// Fallback to /usr/sbin/arp -a
-		arpCmd2 := exec.Command("/usr/sbin/arp", "-a")
-		arpCmd2.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
-		out, _ = arpCmd2.Output()
+	if len(out) == 0 {
+		cmd := exec.Command(arpBin, "-a")
+		out, err = cmd.Output()
+		if err != nil || len(out) == 0 {
+			cmd = exec.Command(arpBin, "-n", "-a")
+			out, _ = cmd.Output()
+		}
 	}
 
 	lines := strings.Split(string(out), "\n")
