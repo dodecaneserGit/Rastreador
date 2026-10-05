@@ -100,12 +100,22 @@ export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
 ```
 
 ### 3. Micro-Localización Wi-Fi Sub-30m (WiGLE Trilateration)
-```bash
-# A. Consultar direcciones MAC BSSID directamente:
-./bin/rastreador -bssid "00:11:22:33:44:55,AA:BB:CC:DD:EE:FF" -wigle-key "TU_WIGLE_BASIC_AUTH"
 
-# B. Escaneo automático del entorno inalámbrico local:
-export WIGLE_API_KEY="TU_WIGLE_BASIC_AUTH"
+> [!NOTE]
+> **¿Qué es un BSSID?**: Es la dirección MAC del Punto de Acceso / Router Wi-Fi físico emisor (ej: `f4:69:42:6a:ae:a0`). La base de datos de WiGLE cuenta con más de 1.450 millones de routers geolocalizados en todo el mundo. Las direcciones MAC inventadas o aleatorias privadas no se encontrarán en WiGLE.
+
+```bash
+# 1. Configuración de credenciales (una sola vez en ~/.zshrc):
+# Copia tu "Encoded for use" o "API Name:API Token" desde https://wigle.net/account
+export WIGLE_API_KEY="AID...:TU_API_TOKEN"
+
+# 2. Geolocalización por BSSID(s) del router físico:
+./bin/rastreador -bssid "f4:69:42:6a:ae:a0"
+
+# 3. Geolocalización combinada: IP + BSSID(s) para micro-precisión (<25m):
+./bin/rastreador -ip 2.139.25.3 -bssid "f4:69:42:6a:ae:a0,3a:50:57:fe:d6:79"
+
+# 4. Escaneo pasivo del entorno local (descubre routers circundantes / gateway):
 ./bin/rastreador -scan-wifi
 ```
 

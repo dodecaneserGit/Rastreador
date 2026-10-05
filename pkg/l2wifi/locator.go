@@ -386,34 +386,85 @@ func scanMacOSAirport() ([]WiFiNetwork, error) {
 		}
 	}
 
-	// Fallback to system_profiler
-	cmd := exec.Command("system_profiler", "SPAirPortDataType")
-	out, err := cmd.Output()
-	if err == nil {
-		macRegex := regexp.MustCompile(`(?i)(?:BSSID|MAC Address):\s*([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})`)
-		matches := macRegex.FindAllStringSubmatch(string(out), -1)
-		if len(matches) > 0 {
-			networks := make([]WiFiNetwork, 0)
-			seen := make(map[string]bool)
-			for _, m := range matches {
-				if len(m) > 1 {
-					bssid := normalizeBSSID(m[1])
-					if bssid != "" && !seen[bssid] {
-						seen[bssid] = true
-						networks = append(networks, WiFiNetwork{
-							BSSID: bssid,
-							RSSI:  -60,
-						})
-					}
+	// Fallback 1: ARP Table default gateway router MAC
+	if gwNets, err := scanGatewayBSSID(); err == nil && len(gwNets) > 0 {
+		return gwNets, nil
+	}
+
+	return nil, fmt.Errorf("no se pudieron escanear balizas Wi-Fi automáticamente en macOS (pasa los BSSIDs con -bssid \"AA:BB:CC:DD:EE:FF\")")
+}
+
+func scanGatewayBSSID() ([]WiFiNetwork, error) {
+	// 1. First get default gateway IP from netstat -rn if possible
+	var gwIP string
+	routeCmd := exec.Command("netstat", "-rn")
+	routeCmd.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
+	if rOut, err := routeCmd.Output(); err == nil {
+		for _, l := range strings.Split(string(rOut), "\n") {
+			if strings.HasPrefix(strings.TrimSpace(l), "default") {
+				fields := strings.Fields(l)
+				if len(fields) >= 2 && !strings.Contains(fields[1], ":") {
+					gwIP = fields[1]
+					break
 				}
-			}
-			if len(networks) > 0 {
-				return networks, nil
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("no se pudieron escanear balizas Wi-Fi automáticamente en macOS (pasa los BSSIDs con -bssid \"AA:BB:CC:DD:EE:FF\")")
+	// 2. Query arp table (either specific IP or full table)
+	var arpArgs []string
+	if gwIP != "" {
+		arpArgs = []string{gwIP}
+	} else {
+		arpArgs = []string{"-a"}
+	}
+
+	arpCmd := exec.Command("arp", arpArgs...)
+	arpCmd.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
+	out, err := arpCmd.Output()
+	if err != nil || len(out) == 0 {
+		// Fallback to /usr/sbin/arp -a
+		arpCmd2 := exec.Command("/usr/sbin/arp", "-a")
+		arpCmd2.Env = append(os.Environ(), "PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin")
+		out, _ = arpCmd2.Output()
+	}
+
+	lines := strings.Split(string(out), "\n")
+	macRegex := regexp.MustCompile(`([0-9a-fA-F]{1,2}(?::[0-9a-fA-F]{1,2}){5})`)
+	ipRegex := regexp.MustCompile(`\(([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\)`)
+
+	var networks []WiFiNetwork
+	seen := make(map[string]bool)
+
+	for _, l := range lines {
+		if strings.Contains(l, "ff:ff:ff:ff:ff:ff") || strings.Contains(l, "incomplete") {
+			continue
+		}
+		ipMatch := ipRegex.FindStringSubmatch(l)
+		macMatch := macRegex.FindString(l)
+		if macMatch != "" {
+			norm := normalizeBSSID(macMatch)
+			if norm != "" && !seen[norm] && !strings.HasPrefix(norm, "ff:ff") && !strings.HasPrefix(norm, "01:00:5e") && !strings.HasPrefix(norm, "33:33") {
+				seen[norm] = true
+				ipStr := "Local Router"
+				if len(ipMatch) > 1 {
+					ipStr = ipMatch[1]
+				} else if gwIP != "" {
+					ipStr = gwIP
+				}
+				networks = append(networks, WiFiNetwork{
+					BSSID: norm,
+					SSID:  fmt.Sprintf("Gateway Router (%s)", ipStr),
+					RSSI:  -45,
+				})
+			}
+		}
+	}
+
+	if len(networks) > 0 {
+		return networks, nil
+	}
+	return nil, fmt.Errorf("no router gateway found in ARP table")
 }
 
 func scanLinuxWiFi() ([]WiFiNetwork, error) {
