@@ -8,18 +8,20 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/dodecaneser/rastreador/pkg/l2wifi"
 	"github.com/dodecaneser/rastreador/pkg/multilat"
 	"github.com/dodecaneser/rastreador/pkg/recon"
 	"github.com/dodecaneser/rastreador/pkg/tunnel"
 )
 
-// FullScanReport aggregates all reconnaissance, multilateration and tunnel inspection findings
+// FullScanReport aggregates all reconnaissance, multilateration, tunnel and L2 Wi-Fi inspection findings
 type FullScanReport struct {
-	TargetIP        string                         `json:"target_ip"`
-	Timestamp       string                         `json:"timestamp"`
-	ReconInfo       *recon.IPInfo                  `json:"recon_info"`
-	Multilateration *multilat.MultilaterationResult `json:"multilateration,omitempty"`
-	TunnelAnalysis  *tunnel.TunnelAnalysis         `json:"tunnel_analysis,omitempty"`
+	TargetIP          string                       `json:"target_ip"`
+	Timestamp         string                       `json:"timestamp"`
+	ReconInfo         *recon.IPInfo                `json:"recon_info,omitempty"`
+	Multilateration   *multilat.MultilaterationResult `json:"multilateration,omitempty"`
+	TunnelAnalysis    *tunnel.TunnelAnalysis       `json:"tunnel_analysis,omitempty"`
+	WiFiTriangulation *l2wifi.TriangulationResult  `json:"wifi_triangulation,omitempty"`
 }
 
 // GenerateHTMLMap creates an interactive Leaflet.js visualization of landmarks, circles, and estimated point

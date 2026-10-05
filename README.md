@@ -30,8 +30,13 @@
    - Medición del delta $\Delta RTT = RTT_{L7} - RTT_{L4}$ para acotar la distancia física real de clientes tras nodos de salida VPN.
    - Detección de sobrecarga de encapsulación (MTU/MSS) y reloj de hardware (*TCP Clock Skew*).
 
-6. **Visualización en Terminal y Mapas Interactivos**:
-   - **Salida enriquecida en CLI**: resumen visual con coordenadas, ISP, radio de confianza y enlace directo a Google Maps.
+6. **Micro-Localización L2 Wi-Fi y Trilateración WiGLE ($\le 30\text{ metros}$)**:
+   - Integración nativa con la API v2 de **WiGLE.net** (+1.450 millones de BSSIDs cartografiados).
+   - Trilateración ponderada por señal RSSI (*Weighted Least Squares*) para alcanzar precisión submétrica ($\pm 8 - 25\text{ metros}$, nivel portal, habitación o despacho).
+   - Escaneo pasivo automático del entorno radioeléctrico Wi-Fi local en macOS y Linux (`-scan-wifi`).
+
+7. **Visualización en Terminal y Mapas Interactivos**:
+   - **Salida enriquecida en CLI**: resumen visual con coordenadas, ISP, radio de confianza, dirección postal y enlace directo a Google Maps.
    - **Mapas interactivos HTML (Leaflet.js + Esri ArcGIS)**: capas Satélite, Callejero y Topográfico 100% libres de API keys y compatibles con protocolo `file://`.
    - **Master Map Grid**: mapa global interactivo que representa simultáneamente cientos de objetivos geolocalizados.
 
@@ -87,12 +92,22 @@ export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
 ./bin/rastreador -ip 8.8.8.8 -ripe-probes 8
 ```
 
-### 3. Escaneo con Análisis de Diferencial de Túnel VPN (L4 vs L7)
+### 3. Micro-Localización Wi-Fi Sub-30m (WiGLE Trilateration)
+```bash
+# A. Consultar direcciones MAC BSSID directamente:
+./bin/rastreador -bssid "00:11:22:33:44:55,AA:BB:CC:DD:EE:FF" -wigle-key "TU_WIGLE_BASIC_AUTH"
+
+# B. Escaneo automático del entorno inalámbrico local:
+export WIGLE_API_KEY="TU_WIGLE_BASIC_AUTH"
+./bin/rastreador -scan-wifi
+```
+
+### 4. Escaneo con Análisis de Diferencial de Túnel VPN (L4 vs L7)
 ```bash
 ./bin/rastreador -ip 198.51.100.4 -l7-url "https://target-domain.com/ping" -map data/vpn_map.html
 ```
 
-### 4. Modo Headless / Scripting (Sin abrir navegador y salida JSON)
+### 5. Modo Headless / Scripting (Sin abrir navegador y salida JSON)
 ```bash
 ./bin/rastreador -ip 8.8.8.8 -open=false -out report.json -json
 ```
@@ -103,9 +118,12 @@ export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
 
 | Flag | Tipo | Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
-| `-ip` | `string` | *requerido* | Dirección IP objetivo a analizar y geolocalizar. |
+| `-ip` | `string` | `""` | Dirección IP objetivo a analizar y geolocalizar. |
+| `-bssid` | `string` | `""` | Lista de BSSIDs (MACs Wi-Fi) separadas por coma para trilateración submétrica (<30m). |
+| `-scan-wifi` | `bool` | `false` | Escanea automáticamente las balizas Wi-Fi del entorno físico local. |
+| `-wigle-key` | `string` | `""` | Credenciales de API de WiGLE (`API_NAME:API_TOKEN` o Base64, o variable `WIGLE_API_KEY`). |
 | `-ripe-key` | `string` | `""` | Clave API de RIPE Atlas para desplegar sondas mundiales (o variable `RIPE_ATLAS_KEY`). |
-| `-ripe-probes` | `int` | `5` | Número de sondas mundiales simultáneas a solicitar a RIPE Atlas. |
+| `-ripe-probes` | `int` | `4` | Número de sondas mundiales simultáneas a solicitar a RIPE Atlas. |
 | `-ports` | `string` | `80,443,22,53,8080` | Puertos TCP separados por coma para medir RTT en capa 4. |
 | `-samples` | `int` | `5` | Muestras de paquetes por sonda para filtrar jitter y ruido de red. |
 | `-l7-url` | `string` | `""` | Endpoint HTTP/S en el objetivo para medir retardo de capa de aplicación (L7). |
@@ -119,10 +137,10 @@ export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
 ## 🗺️ Visualización del Mapa
 
 El archivo HTML generado contiene:
-* **Marcador del Objetivo**: punto central estimado con círculo de confianza geodésico ($\pm X\text{ km}$).
-* **Círculos de Restricción CBG**: circunferencias de alcance máximo de cada sonda / landmark según la velocidad de la luz en fibra.
+* **Marcador del Objetivo**: punto central estimado con círculo de confianza geodésico ($\pm X\text{ km}$ o $\pm X\text{ m}$).
+* **Círculos de Restricción CBG y Balizas Wi-Fi**: circunferencias de alcance máximo de cada sonda / router según la velocidad de la luz en fibra o potencia RSSI.
 * **Selector de Capas**: alternancia entre *Esri World Street Map*, *Esri World Imagery (Satélite)* y *Esri Topográfico*.
-* **Tarjeta HUD**: métricas en tiempo real de BGP, ASN, ISP y botón directo a Google Maps.
+* **Tarjeta HUD**: métricas en tiempo real de BGP, ASN, ISP, dirección postal y botón directo a Google Maps.
 
 ---
 

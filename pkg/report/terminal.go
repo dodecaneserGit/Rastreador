@@ -54,5 +54,22 @@ func PrintTerminalSummary(rep *FullScanReport) {
 		}
 	}
 
+	if rep.WiFiTriangulation != nil && rep.WiFiTriangulation.ResolvedCount > 0 {
+		wifi := rep.WiFiTriangulation
+		fmt.Println("\n  📶 MICRO-LOCALIZACIÓN L2 WI-FI (WIGLE TRILATERATION):")
+		fmt.Printf("    • Coordenadas Baliza  : \033[1;32m%.6f, %.6f\033[0m\n", wifi.EstimatedPoint.Lat, wifi.EstimatedPoint.Lon)
+		fmt.Printf("    • Precisión Sub-30m   : \033[1;32m±%.1f metros\033[0m (Nivel Habitación / Portal)\n", wifi.PrecisionM)
+		if wifi.StreetAddress != "" {
+			fmt.Printf("    • Dirección Postal    : \033[1;36m%s\033[0m\n", wifi.StreetAddress)
+		}
+		fmt.Printf("    • Balizas Resueltas   : %d / %d BSSIDs procesados\n", wifi.ResolvedCount, wifi.TotalBeacons)
+		for _, n := range wifi.Networks {
+			if n.Resolved {
+				fmt.Printf("      - \033[1m%s\033[0m (%-16s): Lat/Lon: %.6f, %.6f | RSSI: %d dBm | %s\n",
+					n.BSSID, n.SSID, n.Lat, n.Lon, n.RSSI, n.Road)
+			}
+		}
+	}
+
 	fmt.Println(strings.Repeat("═", 72) + "\n")
 }
