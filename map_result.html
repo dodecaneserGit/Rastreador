@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador - Geolocalización de IP [212.128.131.17]</title>
+    <title>Rastreador - Geolocalización de IP [2.139.25.3]</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -35,21 +35,21 @@
     <div class="dashboard-card">
         <div class="title">🎯 Rastreador IP Matrix</div>
         <div class="badge badge-direct">RESIDENTIAL_OR_DIRECT</div>
-        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">212.128.131.17</span></div>
-        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS766 (Universidad de Salamanca)</span></div>
-        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Spain / RedIRIS Provider</span></div>
-        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.9616, -5.6698</span></div>
-        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±0.5 km</span></div>
-        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">1 Nodos</span></div>
-        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.9616,-5.6698" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
+        <div class="stat-row"><span class="stat-label">IP Objetivo:</span><span class="stat-val">2.139.25.3</span></div>
+        <div class="stat-row"><span class="stat-label">ASN / Org:</span><span class="stat-val">AS3352 (Telefonica_de_EspaNa - TELEFONICA DE ESPANA S.A.U., ES)</span></div>
+        <div class="stat-row"><span class="stat-label">País / ISP:</span><span class="stat-val">Spain / RIMA (Red IP Multi Acceso)</span></div>
+        <div class="stat-row"><span class="stat-label">Coord. Estimadas:</span><span class="stat-val">40.4535, -3.7042</span></div>
+        <div class="stat-row"><span class="stat-label">Radio Confianza:</span><span class="stat-val">±1.2 km</span></div>
+        <div class="stat-row"><span class="stat-label">Sondas / Hops:</span><span class="stat-val">3 Nodos</span></div>
+        <a class="gmaps-btn" href="https://www.google.com/maps/search/?api=1&query=40.4535,-3.7042" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a>
     </div>
     <div id="map"></div>
 
     <script>
-        const estLat = 40.961600;
-        const estLon = -5.669800;
-        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":15.1,"max_radius_km":1510,"samples":5,"type":"local_vantage"}];
-        const reconData = {"ip":"212.128.131.17","hostname":"www.usal.es","asn":766,"as_org":"Universidad de Salamanca","country":"Spain","country_code":"ES","region":"Castille and León","city":"Salamanca","zip":"37007","facility":"Universidad de Salamanca (Campus Canalejas/Unamuno)","latitude":40.9616,"longitude":-5.6698,"isp":"RedIRIS Provider","is_cloud":false,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"RESIDENTIAL_OR_DIRECT","precision_km":0.45,"indicators":["PTR: www.usal.es","Ground-Truth Facility: Universidad de Salamanca (Campus Canalejas/Unamuno) (±0.45 km)"]};
+        const estLat = 40.453500;
+        const estLon = -3.704200;
+        const landmarks = [{"id":"LOCAL-VANTAGE","name":"Operador Local (Vantage Node)","city":"Madrid Hub","country":"ES","location":{"lat":40.4168,"lon":-3.7038},"min_rtt_ms":6.135,"max_radius_km":613.5,"samples":5,"type":"local_vantage"},{"id":"RIPE-PRB-11237","name":"RIPE Sonda #11237 (AT)","city":"AT","country":"AT","location":{"lat":48.2105,"lon":16.3785},"min_rtt_ms":44.612913,"max_radius_km":4461.2913,"samples":3,"type":"ripe_atlas_probe"},{"id":"RIPE-PRB-1016993","name":"RIPE Sonda #1016993 (FI)","city":"FI","country":"FI","location":{"lat":60.1685,"lon":24.9415},"min_rtt_ms":64.44613,"max_radius_km":6444.612999999999,"samples":3,"type":"ripe_atlas_probe"}];
+        const reconData = {"ip":"2.139.25.3","hostname":"3.red-2-139-25.dynamicip.rima-tde.net","asn":3352,"as_org":"Telefonica_de_EspaNa - TELEFONICA DE ESPANA S.A.U., ES","country":"Spain","country_code":"ES","region":"Madrid","city":"Madrid","zip":"28039","facility":"Central Tetuán / Cuatro Caminos (Bravo Murillo) (Tetuán / Cuatro Caminos)","latitude":40.4535,"longitude":-3.7042,"isp":"RIMA (Red IP Multi Acceso)","is_cloud":false,"is_vpn":false,"is_proxy":false,"is_tor_exit":false,"is_anycast":false,"confidence":"RESIDENTIAL_OR_DIRECT","precision_km":1.2,"indicators":["PTR: 3.red-2-139-25.dynamicip.rima-tde.net","Central Telefónica Local: Central Tetuán / Cuatro Caminos (Bravo Murillo) [Tetuán / Cuatro Caminos] (±1.2 km)"]};
 
         // Base Tile Layers (100% Free, No API Key needed, Full file:// support)
         const streetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -90,7 +90,7 @@
         });
 
         L.marker([estLat, estLon], {icon: targetIcon}).addTo(map)
-            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 0.450000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
+            .bindPopup("<b>🎯 Posición Física Estimada</b><br>Lat: " + estLat.toFixed(4) + "<br>Lon: " + estLon.toFixed(4) + "<br>Confianza: ±" + 1.200000.toFixed(1) + " km<br><a href='https://www.google.com/maps/search/?api=1&query=" + estLat.toFixed(4) + "," + estLon.toFixed(4) + "' target='_blank'>Ver en Google Maps</a>")
             .openPopup();
 
         // Target Confidence Circle
@@ -99,7 +99,7 @@
             fillColor: '#ef4444',
             fillOpacity: 0.18,
             weight: 2,
-            radius: 0.450000 * 1000
+            radius: 1.200000 * 1000
         }).addTo(map);
 
         // Landmark Probes and Constraint Circles

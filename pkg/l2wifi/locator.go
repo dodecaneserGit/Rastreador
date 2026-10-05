@@ -147,8 +147,9 @@ func (c *WiGLEClient) QueryBSSID(ctx context.Context, bssid string) (*WiFiNetwor
 		return nil, fmt.Errorf("WiGLE API key not configured (set WIGLE_API_KEY in ~/.zshrc or pass -wigle-key)")
 	}
 
-	reqURL := fmt.Sprintf("https://api.wigle.net/api/v2/network/detail?netid=%s", url.QueryEscape(normBSSID))
-	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	// 1. Primary: Query WiGLE Search API
+	searchURL := fmt.Sprintf("https://api.wigle.net/api/v2/network/search?netid=%s", url.QueryEscape(normBSSID))
+	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -165,31 +166,60 @@ func (c *WiGLEClient) QueryBSSID(ctx context.Context, bssid string) (*WiFiNetwor
 
 	body, _ := io.ReadAll(resp.Body)
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("WiGLE API returned HTTP %d: %s", resp.StatusCode, string(body))
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return nil, fmt.Errorf("WiGLE authentication failed (HTTP %d). Check your API Token in ~/.zshrc", resp.StatusCode)
 	}
 
-	var data wigleDetailResponse
-	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, err
+	if resp.StatusCode == http.StatusOK {
+		var data wigleDetailResponse
+		if err := json.Unmarshal(body, &data); err == nil && data.Success && len(data.Results) > 0 {
+			res := data.Results[0]
+			net.SSID = res.SSID
+			net.Lat = res.Trilat
+			net.Lon = res.Trilong
+			net.Road = res.Road
+			net.HouseNumber = res.HouseNumber
+			net.City = res.City
+			net.Country = res.Country
+			net.Channel = res.Channel
+			net.Resolved = (net.Lat != 0 || net.Lon != 0)
+			if net.Resolved {
+				return net, nil
+			}
+		}
 	}
 
-	if !data.Success || len(data.Results) == 0 {
-		return nil, fmt.Errorf("BSSID %s not found in WiGLE catalog", normBSSID)
+	// 2. Fallback: Query WiGLE Detail API
+	detailURL := fmt.Sprintf("https://api.wigle.net/api/v2/network/detail?netid=%s", url.QueryEscape(normBSSID))
+	reqDetail, err := http.NewRequestWithContext(ctx, "GET", detailURL, nil)
+	if err == nil {
+		reqDetail.Header.Set("Authorization", c.AuthToken)
+		reqDetail.Header.Set("Accept", "application/json")
+		reqDetail.Header.Set("User-Agent", "Rastreador-Engine/2.0 (L2-WiFi-MicroLocator)")
+		respDetail, err := c.HTTPClient.Do(reqDetail)
+		if err == nil {
+			defer respDetail.Body.Close()
+			bodyDetail, _ := io.ReadAll(respDetail.Body)
+			var dataDetail wigleDetailResponse
+			if err := json.Unmarshal(bodyDetail, &dataDetail); err == nil && dataDetail.Success && len(dataDetail.Results) > 0 {
+				res := dataDetail.Results[0]
+				net.SSID = res.SSID
+				net.Lat = res.Trilat
+				net.Lon = res.Trilong
+				net.Road = res.Road
+				net.HouseNumber = res.HouseNumber
+				net.City = res.City
+				net.Country = res.Country
+				net.Channel = res.Channel
+				net.Resolved = (net.Lat != 0 || net.Lon != 0)
+				if net.Resolved {
+					return net, nil
+				}
+			}
+		}
 	}
 
-	res := data.Results[0]
-	net.SSID = res.SSID
-	net.Lat = res.Trilat
-	net.Lon = res.Trilong
-	net.Road = res.Road
-	net.HouseNumber = res.HouseNumber
-	net.City = res.City
-	net.Country = res.Country
-	net.Channel = res.Channel
-	net.Resolved = (net.Lat != 0 || net.Lon != 0)
-
-	return net, nil
+	return nil, fmt.Errorf("BSSID %s no encontrado en el catálogo global de WiGLE (posible router nuevo o MAC privada)", normBSSID)
 }
 
 // TriangulateBSSIDs resolves a list of BSSIDs and performs RSSI-weighted multilateration to break the 30m barrier

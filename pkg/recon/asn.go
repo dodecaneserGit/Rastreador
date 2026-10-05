@@ -109,6 +109,19 @@ func QueryIP(ctx context.Context, ipStr string) (*IPInfo, error) {
 		info.Longitude = fac.Lon
 		info.PrecisionKm = fac.PrecisionKm
 		info.Indicators = append(info.Indicators, fmt.Sprintf("Ground-Truth Facility: %s (±%.2f km)", fac.Name, fac.PrecisionKm))
+	} else if central := LookupCentralTelefonica(ipStr); central != nil {
+		// 4b. Central Telefónica / BAP Local (Neighborhood/District Precision)
+		info.Facility = fmt.Sprintf("%s (%s)", central.Name, central.District)
+		info.Latitude = central.Lat
+		info.Longitude = central.Lon
+		info.PrecisionKm = central.PrecisionKm
+		if info.City == "" {
+			info.City = central.City
+		}
+		if info.Region == "" {
+			info.Region = central.Province
+		}
+		info.Indicators = append(info.Indicators, fmt.Sprintf("Central Telefónica Local: %s [%s] (±%.1f km)", central.Name, central.District, central.PrecisionKm))
 	} else if info.Zip != "" {
 		if lat, lon, prec, ok := PostalCentroid(info.CountryCode, info.Zip); ok {
 			info.Latitude = lat
