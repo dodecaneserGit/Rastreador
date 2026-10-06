@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -189,8 +190,31 @@ func main() {
 						fmt.Printf("    • [✓] Triangulación WiGLE exitosa: Coordenadas %.6f, %.6f (Precisión: ±%.1fm)\n",
 							res.EstimatedPoint.Lat, res.EstimatedPoint.Lon, res.PrecisionM)
 					}
-					// Update final estimated point with sub-30m Wi-Fi precision
-					if res.EstimatedPoint.Lat != 0 {
+
+					// Geodesic Plausibility Gate: Validate against IP Telecom Central / CBG
+					if estPoint.Lat != 0 && estPoint.Lon != 0 {
+						distKm := multilat.DistanceHaversine(estPoint, res.EstimatedPoint)
+						maxAllowableKm := math.Max(4.0, confidence*2.0)
+						if distKm <= maxAllowableKm {
+							if !*jsonOnlyFlag {
+								fmt.Printf("    • [✓] Validación Geodésica: BSSID consistente con la Central del ISP (distancia: %.2f km). Precisión refinada a ±%.1fm.\n", distKm, res.PrecisionM)
+							}
+							estPoint = res.EstimatedPoint
+							confidence = res.ConfidenceKm
+							multiResult.EstimatedPoint = estPoint
+							multiResult.ConfidenceKm = confidence
+						} else {
+							if !*jsonOnlyFlag {
+								centralName := reconInfo.Facility
+								if centralName == "" {
+									centralName = reconInfo.City
+								}
+								fmt.Printf("    • [⚠️] Alerta de Inconsistencia Geodésica: El BSSID resuelto está a %.1f km de la Central del ISP (%s).\n", distKm, centralName)
+								fmt.Printf("           -> La MAC consultada no pertenece a este domicilio o el router fue trasladado.\n")
+								fmt.Printf("           -> Se mantiene la ubicación principal de alta confianza de la Central del ISP (±%.1f km).\n", confidence)
+							}
+						}
+					} else if res.EstimatedPoint.Lat != 0 {
 						estPoint = res.EstimatedPoint
 						confidence = res.ConfidenceKm
 						multiResult.EstimatedPoint = estPoint
