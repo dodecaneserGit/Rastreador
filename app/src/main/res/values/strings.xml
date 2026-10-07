@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rastreador</string>
+
+    <!-- Notification Channels -->
+    <string name="notification_channel_wardriving_name">Wardriving Telemetry Service</string>
+    <string name="notification_channel_wardriving_desc">Persistent background RF sensor collection (802.11 Wi-Fi, 4G/5G Cellular, GNSS)</string>
+    <string name="notification_channel_alerts_name">Tactical Recon Alerts</string>
+    <string name="notification_channel_alerts_desc">High-priority reconnaissance alerts, target proximity notifications, and forensic export events</string>
+
+    <!-- Background Service Notifications -->
+    <string name="wardriving_service_running">Tactical Wardriving Active</string>
+    <string name="wardriving_service_desc">Continuous passive harvesting of 802.11 beacons and cellular telemetry</string>
+
+    <!-- Tactical HUD Telemetry -->
+    <string name="hud_title">RASTREADOR TACTICAL OS</string>
+    <string name="hud_subtitle">MOBILE RECONNAISSANCE &amp; MULTILATERATION</string>
+    <string name="status_core_engine">CORE ENGINE STATUS</string>
+    <string name="status_standby">STANDBY // READY</string>
+    <string name="status_api_version">API 35 NATIVE</string>
+</resources>

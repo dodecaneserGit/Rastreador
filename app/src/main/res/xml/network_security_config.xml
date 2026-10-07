@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default Configuration: Enforce strict HTTPS/TLS for all external network communications -->
+    <!-- Secures calls to RIPE Atlas probes, WiGLE API, OpenCellID, and remote tile servers -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Cleartext Exceptions for Local Development, Testing, and Local Go Daemons -->
+    <!-- Permits unencrypted HTTP only over local loopback interfaces -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Localhost loopback on physical device -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- Standard Android Emulator loopback host alias -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Secondary emulator network interface -->
+        <domain includeSubdomains="false">10.0.3.2</domain>
+    </domain-config>
+</network-security-config>

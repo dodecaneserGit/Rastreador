@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.dodecaneser.rastreador">
+
+    <!-- =================================================================== -->
+    <!-- 1. NETWORK & INTERNET PERMISSIONS                                   -->
+    <!-- =================================================================== -->
+    <!-- Essential for BGP ASN lookups, RTT CBG probes, WiGLE/OpenCellID APIs -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- =================================================================== -->
+    <!-- 2. GEOLOCATION & SENSOR PERMISSIONS                                 -->
+    <!-- =================================================================== -->
+    <!-- High-precision GNSS positioning and Wi-Fi/Cellular triangulation -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Required for continuous wardriving with screen off / background transit -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- =================================================================== -->
+    <!-- 3. WI-FI & RF RADIO SCANNING PERMISSIONS                            -->
+    <!-- =================================================================== -->
+    <!-- Passive beacon sniffing and active scan trigger -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- Android 13+ (API 33+) Nearby Wi-Fi Devices Permission -->
+    <!-- CRITICAL ARCHITECTURAL REQUIREMENT:                                -->
+    <!-- DO NOT add android:usesPermissionFlags="neverForLocation"           -->
+    <!-- Rastreador explicitly uses Wi-Fi scans to calculate geolocation    -->
+    <!-- and wardriving coordinates. Setting neverForLocation will strip     -->
+    <!-- BSSIDs/SSIDs and break triangulation.                              -->
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+
+    <!-- =================================================================== -->
+    <!-- 4. TELEPHONY & CELL TOWER EXTRACTION PERMISSIONS                    -->
+    <!-- =================================================================== -->
+    <!-- Required by TelephonyManager / TelephonyCallback for LTE & 5G NR cell info -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_BASIC_PHONE_STATE" />
+
+    <!-- =================================================================== -->
+    <!-- 5. ANDROID 14+ (API 34/35) FOREGROUND SERVICE PERMISSIONS           -->
+    <!-- =================================================================== -->
+    <!-- Base foreground service permission -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Mandatory for Android 14+ when declaring foregroundServiceType="location" -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- =================================================================== -->
+    <!-- 6. NOTIFICATIONS & SYSTEM POWER LIFECYCLE PERMISSIONS               -->
+    <!-- =================================================================== -->
+    <!-- Android 13+ (API 33+) runtime notification permission for persistent HUD status -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- CPU lock to prevent OS suspension during locked-screen wardriving -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Auto-resume or telemetry session state restoration upon boot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Request exemption from aggressive Doze mode during tactical missions -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- High frequency sensor sampling for IMU/compass bearing calculations -->
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+
+    <!-- =================================================================== -->
+    <!-- 7. HARDWARE FEATURE DECLARATIONS                                    -->
+    <!-- =================================================================== -->
+    <!-- Hardware required for fundamental operation -->
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="true" />
+
+    <!-- Hardware optional: Allows installation on Wi-Fi-only tablets or test pods -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+
+    <!-- =================================================================== -->
+    <!-- 8. APPLICATION CONTAINER DECLARATION                                -->
+    <!-- =================================================================== -->
+    <application
+        android:name=".RastreadorApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.Rastreador"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:extractNativeLibs="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="35">
+
+        <!-- =============================================================== -->
+        <!-- 8.1 MAIN ACTIVITY (CYBER-HUD HOST)                              -->
+        <!-- =============================================================== -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:theme="@style/Theme.Rastreador">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- =============================================================== -->
+        <!-- 8.2 WARDRIVING BACKGROUND FOREGROUND SERVICE                    -->
+        <!-- =============================================================== -->
+        <!-- Android 14+ strictly requires android:foregroundServiceType     -->
+        <!-- Must be exported="false" to prevent external component hijack  -->
+        <service
+            android:name=".sensors.WardrivingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            android:stopWithTask="false" />
+
+    </application>
+
+</manifest>

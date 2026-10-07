@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme inheriting from android:Theme.Material.NoActionBar -->
+    <!-- Ensures 100% compatibility with Jetpack Compose enableEdgeToEdge without external AAR dependencies -->
+    <style name="Theme.Rastreador" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#050811</item>
+        <item name="android:navigationBarColor">#050811</item>
+        <item name="android:windowBackground">#050811</item>
+    </style>
+</resources>

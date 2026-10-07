@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="void_black">#050811</color>
+    <color name="surface_dark">#0D1322</color>
+    <color name="surface_elevated">#151E33</color>
+    <color name="matrix_green">#00FF66</color>
+    <color name="cyber_cyan">#00E5FF</color>
+    <color name="warning_amber">#FFB800</color>
+    <color name="hazard_pink">#FF0055</color>
+</resources>
