@@ -19,6 +19,8 @@
 -keep class go.** { *; }
 -keep class mobile.** { *; }
 -keep class rastreador.** { *; }
+-keep class com.dodecaneser.rastreador.bridge.** { *; }
+-keepclassmembers class com.dodecaneser.rastreador.bridge.** { *; }
 
 # Preserve Kotlin Go Bridge interfaces and native implementations
 -keep class com.dodecaneser.rastreador.core.** { *; }
@@ -33,6 +35,7 @@
 -dontwarn go.**
 -dontwarn mobile.**
 -dontwarn rastreador.**
+-dontwarn com.dodecaneser.rastreador.bridge.**
 
 # ------------------------------------------------------------------------------
 # 3. KOTLINX SERIALIZATION PRESERVATION
