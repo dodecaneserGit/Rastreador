@@ -1,51 +1,50 @@
 # 🎯 Rastreador
 
-**Motor de Geolocalización Activa por Multilateración y Desanonimización de Capas de Red (Go)**
+**Motor de Geolocalización Activa por Multilateración IP, Desanonimización de Túneles VPN y Micro-Localización L2 Wi-Fi (Go)**
 
-`Rastreador` es una herramienta de código abierto multiplataforma (macOS, Linux, Windows) diseñada para determinar la ubicación geográfica física real de una dirección IP mediante el modelo matemático de restricciones **Constraint-Based Geolocation (CBG)**, física de propagación en fibra óptica ($c_{fibra} \approx 200.000\text{ km/s}$), reconocimiento BGP/ASN, integración distribuida con **RIPE Atlas** y análisis diferencial de retardo entre la capa de transporte (L4) y la capa de aplicación (L7) para desenmascarar nodos ocultos tras VPNs o Proxies.
+> **Estado**: `v1.9.0-rc1` (Versión previa a Release Final).
+
+`Rastreador` es una herramienta de código abierto multiplataforma (macOS, Linux, Windows) diseñada para determinar la ubicación geográfica física real de una dirección IP o punto de acceso inalámbrico mediante el modelo matemático de restricciones **Constraint-Based Geolocation (CBG)**, física de propagación en fibra óptica ($c_{fibra} \approx 200.000\text{ km/s}$), reconocimiento BGP/ASN, integración distribuida con **RIPE Atlas**, mapeo de **Centrales Telefónicas (BAP/RIMA)**, análisis diferencial de retardo L4 vs L7, huella digital de hardware (**RFC 6864**) y trilateración L2 Wi-Fi con **WiGLE.net**.
 
 ---
 
 ## ⚡ Características Principales
 
 1. **Reconocimiento BGP y Clasificación de Infraestructura**:
-   - Consultas DNS directas a Team Cymru para resolución instantánea de ASN, ISP y Organización BGP sin rate-limits.
-   - Detección de datacenters, clouds públicas (AWS, GCP, Azure, Hetzner, DigitalOcean, OVH) y proveedores comerciales de VPN (Mullvad, ProtonVPN, NordVPN, etc.).
+   - Consultas DNS directas a Team Cymru para resolución instantánea de ASN, ISP y Organización BGP sin rate-limits de APIs comerciales.
+   - Detección automática de datacenters, clouds públicas (AWS, GCP, Azure, Hetzner, DigitalOcean, OVH) y proveedores comerciales de VPN (Mullvad, ProtonVPN, NordVPN, etc.).
    - Identificación de códigos IATA de metro/aeropuertos en registros PTR inversos.
 
 2. **Multilateración Activa CBG (Constraint-Based Geolocation)**:
-   - Sondas de retardo (RTT) de alta precisión mediante TCP SYN y ACK en puertos estándar.
+   - Sondas de retardo (RTT) de alta precisión mediante paquetes TCP SYN y ACK en puertos estándar.
    - Cálculo del radio máximo físico según la velocidad de la luz en vidrio ($d_{max} = \frac{RTT \times 200}{2}$).
    - Solver geométrico espacial WGS84 (Haversine) para estimar las coordenadas y el radio de confianza.
 
-3. **Micro-Geocodificación y Mapeo Ground-Truth de Facilidades y Campus**:
-   - Catálogo integrado de coordenadas geodésicas de más de 100 instalaciones universitarias, centros de supercomputación, laboratorios de investigación y datacenters globales.
-   - Resolución de micro-centroides postales en distritos urbanos con precisión física **$\le \pm 1.0\text{ km}$** (nivel campus, edificio y centro de datos).
+3. **Mapeo de Centrales Telefónicas y Cabeceras BAP/RIMA (ISP Local)**:
+   - Catálogo integrado de subredes residenciales dinámicas asignadas a centrales de conmutación telefónica físicas (Tetuán, Chamberí, Goya, Delicias, Eixample, Nervión, etc.) acotando conexiones domésticas al barrio o distrito exacto (**$\pm 1.0 - 1.5\text{ km}$**).
 
-4. **Mapeo de Centrales Telefónicas Locales y Puntos de Agregación BAP/RIMA**:
-   - Asignación de subredes residenciales dinámicas a las centrales de conmutación telefónica físicas (Tetuán, Chamberí, Goya, Delicias, Eixample, Nervión, etc.) logrando acotar conexiones domésticas al barrio o distrito exacto ($\pm 1.0 - 1.5\text{ km}$).
+4. **Integración Global con RIPE Atlas (Sondas Distribuidas Mundiales)**:
+   - Conexión nativa con la API v2 de **RIPE Atlas** para lanzar mediciones *one-off* desde sondas reales de hardware desplegadas en múltiples continentes (`WW`, `EU`, `NA`, etc.).
 
-5. **Integración Global con RIPE Atlas (Sondas Distribuidas Mundiales)**:
-   - Conexión nativa con la API v2 de **RIPE Atlas** para lanzar mediciones *one-off* desde sondas reales distribuidas en múltiples continentes (`WW`, `EU`, `NA`, etc.).
-   - Recuperación automática de mediciones públicas históricas para IPs de servicios troncales.
-
-6. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
+5. **Análisis de Túneles y Diferencial de Latencia (L4 vs L7)**:
    - Medición del delta $\Delta RTT = RTT_{L7} - RTT_{L4}$ para acotar la distancia física real de clientes tras nodos de salida VPN.
    - Detección de sobrecarga de encapsulación (MTU/MSS) y reloj de hardware (*TCP Clock Skew*).
 
-7. **Dinámica de Reloj IP-ID y Velocidad de Paquetes (RFC 6864 / RFC 1323)**:
+6. **Dinámica de Reloj IP-ID y Huella de Hardware (RFC 6864 / RFC 1323)**:
    - Identificación del algoritmo de generación de identificadores IPv4 en el kernel (Incremental Global, Hash por Host, Aleatorio, Constante Cero).
    - Generación de la huella digital física única de hardware (`[HW-XXXX]`), persistente e invariable cuando la máquina víctima salta entre diferentes servidores VPN o redes WiFi.
 
-8. **Micro-Localización L2 Wi-Fi y Trilateración WiGLE ($\le 30\text{ metros}$)**:
+7. **Micro-Localización L2 Wi-Fi y Trilateración WiGLE ($\le 25\text{ metros}$)**:
    - Integración nativa con la API v2 de **WiGLE.net** (+1.450 millones de BSSIDs cartografiados).
-   - Trilateración ponderada por señal RSSI (*Weighted Least Squares*) para alcanzar precisión submétrica ($\pm 8 - 25\text{ metros}$, nivel portal, habitación o despacho).
-   - Escaneo pasivo automático del entorno radioeléctrico Wi-Fi local en macOS y Linux (`-scan-wifi`).
+   - Trilateración ponderada por potencia de señal RSSI (*Weighted Least Squares*) para alcanzar precisión submétrica ($\pm 8 - 25\text{ metros}$, nivel portal, habitación o despacho).
+
+8. **Filtro de Consistencia Geodésica (*Geodesic Plausibility Gate*)**:
+   - Validación cruzada automática entre la ubicación de la Central del ISP y los BSSIDs consultados.
+   - Si un BSSID está a más de 4 km de la Central Telefónica del ISP, el sistema alerta de la inconsistencia y preserva la ubicación de alta confianza de la Central, evitando falsos positivos por routers trasladados.
 
 9. **Visualización en Terminal y Mapas Interactivos**:
    - **Salida enriquecida en CLI**: resumen visual con coordenadas, ISP, radio de confianza, dirección postal y enlace directo a Google Maps.
    - **Mapas interactivos HTML (Leaflet.js + Esri ArcGIS)**: capas Satélite, Callejero y Topográfico 100% libres de API keys y compatibles con protocolo `file://`.
-   - **Master Map Grid**: mapa global interactivo que representa simultáneamente cientos de objetivos geolocalizados.
 
 ---
 
@@ -64,6 +63,12 @@ go build -o bin/rastreador ./cmd/rastreador
 go build -o bin/testsuite ./cmd/testsuite
 ```
 
+### Configuración del Alias (Opcional):
+Añade a tu `~/.zshrc` o `~/.bashrc`:
+```bash
+alias rastreador='/Volumes/SSD/Proyectos/Rastreador/bin/rastreador'
+```
+
 ---
 
 ## 🧪 Suite de Pruebas y Benchmark Masivo (105 IPs)
@@ -74,7 +79,6 @@ Ejecuta el test automatizado sobre 105 direcciones IP reales y activas distribui
 ./bin/testsuite -workers=8 -out data/test_100_results.json -summary data/test_100_summary.md -map data/map_100_ips.html
 ```
 
-### Resultados del Benchmark:
 * **Total Evaluadas**: 105 IPs
 * **Tasa de Éxito**: 100.0% (105/105)
 * **Precisión $\le \pm 1.0\text{ km}$**: 100.0% (105/105)
@@ -84,49 +88,47 @@ Ejecuta el test automatizado sobre 105 direcciones IP reales y activas distribui
 
 ## 📖 Uso y Ejemplos
 
-### 1. Escaneo Local Básico con Apertura Automática del Mapa
+### 1. Geolocalización de IP (BGP + Centrales Telefónicas + Sondas RTT)
 ```bash
-./bin/rastreador -ip 212.128.131.17
+rastreador -ip 2.139.25.3
 ```
 
-### 2. Escaneo con Sondas Mundiales de RIPE Atlas
-```bash
-# Pasando la API Key por parámetro:
-./bin/rastreador -ip 1.1.1.1 -ripe-key "TU-API-KEY-RIPE" -ripe-probes 5
-
-# O configurando la variable de entorno:
-export RIPE_ATLAS_KEY="TU-API-KEY-RIPE"
-./bin/rastreador -ip 8.8.8.8 -ripe-probes 8
-```
-
-### 3. Micro-Localización Wi-Fi Sub-30m (WiGLE Trilateration)
+### 2. Micro-Localización Wi-Fi Sub-30m (WiGLE Trilateration)
 
 > [!NOTE]
-> **¿Qué es un BSSID?**: Es la dirección MAC del Punto de Acceso / Router Wi-Fi físico emisor (ej: `f4:69:42:6a:ae:a0`). La base de datos de WiGLE cuenta con más de 1.450 millones de routers geolocalizados en todo el mundo. Las direcciones MAC inventadas o aleatorias privadas no se encontrarán en WiGLE.
+> **¿Qué es un BSSID?**: Es la dirección MAC física del router Wi-Fi (ej: `00:00:00:00:01:DC`). WiGLE indexa redes capturadas mediante wardriving.
 
 ```bash
-# 1. Configuración de credenciales (una sola vez en ~/.zshrc):
-# Copia tu "Encoded for use" o "API Name:API Token" desde https://wigle.net/account
+# Configurar API Key una sola vez en ~/.zshrc:
 export WIGLE_API_KEY="AID...:TU_API_TOKEN"
 
-# 2. Geolocalización por BSSID(s) del router físico:
-./bin/rastreador -bssid "f4:69:42:6a:ae:a0"
+# Consulta directa por BSSID:
+rastreador -bssid "00:00:00:00:01:DC"
 
-# 3. Geolocalización combinada: IP + BSSID(s) para micro-precisión (<25m):
-./bin/rastreador -ip 2.139.25.3 -bssid "f4:69:42:6a:ae:a0,3a:50:57:fe:d6:79"
+# Geolocalización combinada (IP + BSSID con Validación Geodésica):
+rastreador -ip 2.139.25.3 -bssid "00:00:00:00:01:DC"
 
-# 4. Escaneo pasivo del entorno local (descubre routers circundantes / gateway):
-./bin/rastreador -scan-wifi
+# Trilateración multi-router (fusión ponderada RSSI):
+rastreador -bssid "00:00:00:38:25:F5,00:00:00:85:3C:B9,00:00:00:B3:37:CC"
 ```
 
-### 4. Escaneo con Análisis de Diferencial de Túnel VPN (L4 vs L7)
+### 3. Escaneo con Sondas Mundiales de RIPE Atlas
 ```bash
-./bin/rastreador -ip 198.51.100.4 -l7-url "https://target-domain.com/ping" -map data/vpn_map.html
+# Configurar clave RIPE Atlas en ~/.zshrc:
+export RIPE_ATLAS_KEY="e387d7eb-5624-460a-a57c-feea48b2bd88"
+
+# Lanzar medición distribuida con 6 sondas mundiales:
+rastreador -ip 1.1.1.1 -ripe-probes 6
 ```
 
-### 5. Modo Headless / Scripting (Sin abrir navegador y salida JSON)
+### 4. Detección de Saltos Ocultos tras VPN (L4 vs L7)
 ```bash
-./bin/rastreador -ip 8.8.8.8 -open=false -out report.json -json
+rastreador -ip 198.51.100.4 -l7-url "https://target-domain.com/ping"
+```
+
+### 5. Modo Headless / Automatización JSON
+```bash
+rastreador -ip 8.8.8.8 -open=false -out resultado.json -json
 ```
 
 ---
@@ -137,8 +139,8 @@ export WIGLE_API_KEY="AID...:TU_API_TOKEN"
 | :--- | :--- | :--- | :--- |
 | `-ip` | `string` | `""` | Dirección IP objetivo a analizar y geolocalizar. |
 | `-bssid` | `string` | `""` | Lista de BSSIDs (MACs Wi-Fi) separadas por coma para trilateración submétrica (<30m). |
-| `-scan-wifi` | `bool` | `false` | Escanea automáticamente las balizas Wi-Fi del entorno físico local. |
-| `-wigle-key` | `string` | `""` | Credenciales de API de WiGLE (`API_NAME:API_TOKEN` o Base64, o variable `WIGLE_API_KEY`). |
+| `-scan-wifi` | `bool` | `false` | Escanea automáticamente las balizas Wi-Fi del entorno físico local (Linux). |
+| `-wigle-key` | `string` | `""` | Credenciales de API de WiGLE (`API_NAME:API_TOKEN` o variable `WIGLE_API_KEY`). |
 | `-ripe-key` | `string` | `""` | Clave API de RIPE Atlas para desplegar sondas mundiales (o variable `RIPE_ATLAS_KEY`). |
 | `-ripe-probes` | `int` | `4` | Número de sondas mundiales simultáneas a solicitar a RIPE Atlas. |
 | `-ports` | `string` | `80,443,22,53,8080` | Puertos TCP separados por coma para medir RTT en capa 4. |
@@ -153,7 +155,7 @@ export WIGLE_API_KEY="AID...:TU_API_TOKEN"
 
 ## 🗺️ Visualización del Mapa
 
-El archivo HTML generado contiene:
+El archivo HTML interactivo generado incluye:
 * **Marcador del Objetivo**: punto central estimado con círculo de confianza geodésico ($\pm X\text{ km}$ o $\pm X\text{ m}$).
 * **Círculos de Restricción CBG y Balizas Wi-Fi**: circunferencias de alcance máximo de cada sonda / router según la velocidad de la luz en fibra o potencia RSSI.
 * **Selector de Capas**: alternancia entre *Esri World Street Map*, *Esri World Imagery (Satélite)* y *Esri Topográfico*.
@@ -163,4 +165,4 @@ El archivo HTML generado contiene:
 
 ## 📄 Licencia
 
-Proyecto desarrollado bajo licencia MIT. Consulta el archivo `LICENSE` para más información.
+Este proyecto está bajo la Licencia MIT.
