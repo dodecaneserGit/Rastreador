@@ -8,6 +8,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import java.io.IOException
 
 @Serializable
@@ -60,9 +62,20 @@ class GoBridgeImpl(
 ) : RastreadorCoreEngine {
 
     companion object {
+        /**
+         * Resolves the highest-priority functional bridge driver available:
+         * 1. JNI C-shared native driver (librastreador.so)
+         * 2. Gomobile AAR native driver (libgojni.so + Mobile.java)
+         * 3. High-fidelity pure JVM fallback driver (desktop unit testing & fallback)
+         */
         fun resolveDefaultDriver(): NativeBridgeDriver {
             val jni = JniNativeBridgeDriver()
-            return if (jni.isAvailable()) jni else JvmFallbackBridgeDriver()
+            if (jni.isAvailable()) return jni
+
+            val gomobile = GomobileBridgeDriver()
+            if (gomobile.isAvailable()) return gomobile
+
+            return JvmFallbackBridgeDriver()
         }
     }
 
@@ -184,16 +197,16 @@ class GoBridgeImpl(
     /**
      * Safely parses either an envelope BridgeEnvelope<T> or a raw JSON string of T.
      */
-    private inline fun <reified T> unwrapEnvelope(rawJson: String): T {
-        return try {
-            val envelope = json.decodeFromString<BridgeEnvelope<T>>(rawJson)
-            if (!envelope.success) {
+    internal inline fun <reified T> unwrapEnvelope(rawJson: String): T {
+        val element = json.parseToJsonElement(rawJson)
+        if (element is JsonObject && (element.containsKey("success") || element.containsKey("error"))) {
+            val envelope = json.decodeFromJsonElement<BridgeEnvelope<T>>(element)
+            if (!envelope.success || envelope.error != null) {
                 throw IOException(envelope.error ?: "Bridge returned failure without message")
             }
-            envelope.data ?: throw IOException("Bridge returned success with null data payload")
-        } catch (e: SerializationException) {
-            // Direct object fallback (if Go bridge returned raw object directly)
-            json.decodeFromString<T>(rawJson)
+            return envelope.data ?: throw IOException("Bridge returned success with null data payload")
         }
+        // Direct object fallback (if Go bridge returned raw object directly)
+        return json.decodeFromJsonElement<T>(element)
     }
 }

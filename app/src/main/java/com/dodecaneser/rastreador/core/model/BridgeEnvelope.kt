@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BridgeEnvelope<T>(
-    @SerialName("success") val success: Boolean = true,
+    @SerialName("success") val success: Boolean,
     @SerialName("data") val data: T? = null,
     @SerialName("error") val error: String? = null
 )
