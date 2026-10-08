@@ -4,7 +4,8 @@
 
 > **Versión**: `1.0.0-rc1`  
 > **Target SDK**: Android 15 (API 35) / Min SDK: Android 8.0 (API 26)  
-> **Stack**: Kotlin 2.1 + Jetpack Compose (Material 3 Cyber-HUD) + OsmDroid + Room SQLite + Go Core Engine (Cgo/JNI)
+> **Stack**: Kotlin 2.1 + Jetpack Compose (Material 3 Cyber-HUD) + OsmDroid + Room SQLite + Go Core Engine (Cgo/JNI)  
+> **Manual de Usuario**: [📖 Leer Guía de Operación Paso a Paso](docs/MANUAL_DE_USO.md)
 
 ---
 
