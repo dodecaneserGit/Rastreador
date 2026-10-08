@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dodecaneser.rastreador.core.GoBridgeImpl
@@ -91,8 +92,8 @@ fun NetworkIntelScreen(
         ) {
             Text(
                 text = "INTELIGENCIA DE RED BGP & IP-ID",
-                style = MaterialTheme.typography.displayMedium,
-                color = CyberColors.CyberCyan
+                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalCrimson
             )
         }
 
@@ -110,11 +111,11 @@ fun NetworkIntelScreen(
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CyberColors.CyberCyan,
-                    unfocusedBorderColor = CyberColors.TextMuted,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = CyberColors.CyberCyan
+                    focusedBorderColor = CyberColors.TacticalCrimson,
+                    unfocusedBorderColor = CyberColors.SurfaceBorder,
+                    focusedTextColor = CyberColors.PureWhite,
+                    unfocusedTextColor = CyberColors.PureWhite,
+                    cursorColor = CyberColors.TacticalCrimson
                 )
             )
             Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -122,19 +123,25 @@ fun NetworkIntelScreen(
                 onClick = { runIntelAudit(targetIp) },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CyberColors.MatrixGreen,
-                    contentColor = Color.Black
+                    containerColor = CyberColors.TacticalRed,
+                    contentColor = CyberColors.PureWhite
                 ),
                 shape = RoundedCornerShape(4.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.height(18.dp).padding(2.dp),
-                        color = Color.Black,
+                        color = CyberColors.PureWhite,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("AUDITAR", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        "AUDITAR",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = CyberColors.PureWhite
+                        )
+                    )
                 }
             }
         }
@@ -146,7 +153,7 @@ fun NetworkIntelScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .tacticalHudFrame(
-                    borderColor = CyberColors.CyberCyan,
+                    borderColor = CyberColors.TacticalCrimson,
                     cornerLength = 10.dp,
                     strokeWidth = 1.5.dp,
                     showScanlines = false
@@ -156,8 +163,8 @@ fun NetworkIntelScreen(
         ) {
             Text(
                 text = "ENRUTAMIENTO BGP / SISTEMA AUTÓNOMO",
-                style = MaterialTheme.typography.labelMedium,
-                color = CyberColors.CyberCyan
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalCrimson
             )
             Spacer(modifier = Modifier.height(6.dp))
             RowDetail("SISTEMA AUTÓNOMO (ASN)", "AS${bgpResult?.asn ?: 3352}")
@@ -173,7 +180,7 @@ fun NetworkIntelScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .tacticalHudFrame(
-                    borderColor = CyberColors.MatrixGreen,
+                    borderColor = CyberColors.TacticalRuby,
                     cornerLength = 10.dp,
                     strokeWidth = 1.5.dp,
                     showScanlines = false
@@ -183,8 +190,8 @@ fun NetworkIntelScreen(
         ) {
             Text(
                 text = "VELOCIDAD IP-ID & HUELLA HARDWARE (RFC 6864)",
-                style = MaterialTheme.typography.labelMedium,
-                color = CyberColors.MatrixGreen
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalRuby
             )
             Spacer(modifier = Modifier.height(6.dp))
             val vel = ipIdResult?.velocityPacketsPerSec?.let { String.format("%.0f IDs/s", it) } ?: "24,198 IDs/s"
@@ -212,7 +219,7 @@ fun NetworkIntelScreen(
         ) {
             Text(
                 text = "TÚNELES VPN & CENTRALES FTTH (BAP/RIMA)",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = CyberColors.WarningAmber
             )
             Spacer(modifier = Modifier.height(6.dp))
@@ -236,11 +243,11 @@ private fun RowDetail(label: String, value: String) {
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(color = CyberColors.TextMuted, fontSize = 10.sp)
+            style = MaterialTheme.typography.labelSmall.copy(color = CyberColors.TextSecondary, fontSize = 10.sp)
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.labelSmall.copy(color = Color.White, fontSize = 10.sp)
+            style = MaterialTheme.typography.labelSmall.copy(color = CyberColors.PureWhite, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
         )
     }
 }

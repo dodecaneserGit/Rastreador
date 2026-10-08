@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +43,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.dodecaneser.rastreador.core.GoBridgeImpl
 import com.dodecaneser.rastreador.core.RastreadorCoreEngine
 import com.dodecaneser.rastreador.core.model.BgpAsnResult
-import com.dodecaneser.rastreador.core.model.GeoPoint
 import com.dodecaneser.rastreador.core.model.MultilaterationResult
 import com.dodecaneser.rastreador.core.model.WiFiBeaconScan
 import com.dodecaneser.rastreador.ui.components.tacticalHudFrame
@@ -134,18 +134,21 @@ fun RadarMapScreen(
         ) {
             Text(
                 text = "RASTREADOR TACTICAL RADAR",
-                style = MaterialTheme.typography.displayMedium,
-                color = CyberColors.CyberCyan
+                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalCrimson
             )
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(if (isLoading) CyberColors.WarningAmber else CyberColors.MatrixGreen)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .background(if (isLoading) CyberColors.WarningAmber else CyberColors.TacticalRed)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = if (isLoading) "ESCANEO ACTIVO" else "EN LÍNEA",
-                    style = MaterialTheme.typography.labelSmall.copy(color = Color.Black)
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = CyberColors.PureWhite,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
         }
@@ -164,11 +167,11 @@ fun RadarMapScreen(
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CyberColors.CyberCyan,
-                    unfocusedBorderColor = CyberColors.TextMuted,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = CyberColors.CyberCyan
+                    focusedBorderColor = CyberColors.TacticalCrimson,
+                    unfocusedBorderColor = CyberColors.SurfaceBorder,
+                    focusedTextColor = CyberColors.PureWhite,
+                    unfocusedTextColor = CyberColors.PureWhite,
+                    cursorColor = CyberColors.TacticalCrimson
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { executeTacticalScan(targetInput) })
@@ -178,19 +181,27 @@ fun RadarMapScreen(
                 onClick = { executeTacticalScan(targetInput) },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CyberColors.CyberCyan,
-                    contentColor = Color.Black
+                    containerColor = CyberColors.TacticalRed,
+                    contentColor = CyberColors.PureWhite,
+                    disabledContainerColor = CyberColors.SurfaceElevated,
+                    disabledContentColor = CyberColors.TextMuted
                 ),
                 shape = RoundedCornerShape(4.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.height(18.dp).width(18.dp),
-                        color = Color.Black,
+                        color = CyberColors.PureWhite,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("RASTREAR", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        "RASTREAR",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = CyberColors.PureWhite
+                        )
+                    )
                 }
             }
         }
@@ -206,19 +217,20 @@ fun RadarMapScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .background(CyberColors.SurfaceDark)
-                        .border(1.dp, CyberColors.SurfaceBorder, RoundedCornerShape(4.dp))
+                        .background(CyberColors.SurfaceElevated)
+                        .border(1.dp, CyberColors.TacticalCrimson.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                         .clickable {
                             targetInput = preset
                             executeTacticalScan(preset)
                         }
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                        .padding(horizontal = 8.dp, vertical = 5.dp)
                 ) {
                     Text(
                         text = preset,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 10.sp,
-                            color = CyberColors.MatrixGreen
+                            fontSize = 11.sp,
+                            color = CyberColors.PureWhite,
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
@@ -230,14 +242,14 @@ fun RadarMapScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(4.dp))
-                    .background(CyberColors.AlertCrimson.copy(alpha = 0.2f))
+                    .background(CyberColors.AlertCrimson.copy(alpha = 0.25f))
                     .border(1.dp, CyberColors.AlertCrimson, RoundedCornerShape(4.dp))
                     .padding(8.dp)
             ) {
                 Text(
                     text = "ALERTA: $errorMessage",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = CyberColors.AlertCrimson
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = CyberColors.PureWhite
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -251,7 +263,7 @@ fun RadarMapScreen(
                 .fillMaxWidth()
                 .height(280.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .border(1.dp, CyberColors.CyberCyan, RoundedCornerShape(6.dp))
+                .border(1.5.dp, CyberColors.TacticalCrimson, RoundedCornerShape(6.dp))
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -281,8 +293,8 @@ fun RadarMapScreen(
                         val circle = Polygon(mapView).apply {
                             val radiusMeters = if (res.confidenceKm > 0) res.confidenceKm * 1000.0 else 500.0
                             points = Polygon.pointsAsCircle(centerPoint, radiusMeters)
-                            fillPaint.color = 0x2200F0FF
-                            outlinePaint.color = 0xFF00F0FF.toInt()
+                            fillPaint.color = 0x22FF2A4B
+                            outlinePaint.color = 0xFFFF2A4B.toInt()
                             outlinePaint.strokeWidth = 2.5f
                         }
                         mapView.overlays.add(circle)
@@ -300,7 +312,7 @@ fun RadarMapScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .tacticalHudFrame(
-                    borderColor = CyberColors.CyberCyan,
+                    borderColor = CyberColors.TacticalCrimson,
                     cornerLength = 12.dp,
                     strokeWidth = 1.5.dp,
                     showScanlines = false
@@ -310,8 +322,8 @@ fun RadarMapScreen(
         ) {
             Text(
                 text = "TELEMETRÍA FORENSE OBJETIVO",
-                style = MaterialTheme.typography.displayMedium,
-                color = CyberColors.MatrixGreen
+                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalRuby
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -342,11 +354,11 @@ private fun TelemetryRow(label: String, value: String) {
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium.copy(color = CyberColors.TextMuted, fontSize = 11.sp)
+            style = MaterialTheme.typography.labelMedium.copy(color = CyberColors.TextSecondary, fontSize = 11.sp)
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.labelMedium.copy(color = Color.White, fontSize = 11.sp)
+            style = MaterialTheme.typography.labelMedium.copy(color = CyberColors.PureWhite, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         )
     }
 }

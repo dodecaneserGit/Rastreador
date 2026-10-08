@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -110,19 +111,20 @@ fun WardrivingScreen(
         ) {
             Text(
                 text = "ESCÁNER RF & WARDRIVING",
-                style = MaterialTheme.typography.displayMedium,
-                color = CyberColors.CyberCyan
+                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
+                color = CyberColors.TacticalCrimson
             )
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(if (isServiceRunning) CyberColors.MatrixGreen else CyberColors.SurfaceElevated)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .background(if (isServiceRunning) CyberColors.TacticalRed else CyberColors.SurfaceElevated)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = if (isServiceRunning) "REC ON (2DO PLANO)" else "STANDBY",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = if (isServiceRunning) Color.Black else CyberColors.TextMuted
+                        color = CyberColors.PureWhite,
+                        fontWeight = FontWeight.Bold
                     )
                 )
             }
@@ -135,7 +137,7 @@ fun WardrivingScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .tacticalHudFrame(
-                    borderColor = CyberColors.MatrixGreen,
+                    borderColor = CyberColors.TacticalCrimson,
                     cornerLength = 10.dp,
                     strokeWidth = 1.5.dp,
                     showScanlines = false
@@ -149,13 +151,13 @@ fun WardrivingScreen(
             ) {
                 Text(
                     text = "GPS LOCK: ${if (lastLocation != null) "FIJADO (3D)" else "LOCALIZANDO..."}",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (lastLocation != null) CyberColors.MatrixGreen else CyberColors.WarningAmber
                 )
                 Text(
                     text = "PRECISIÓN: ±${lastLocation?.accuracy?.let { String.format("%.1fm", it) } ?: "2.5m"}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = CyberColors.CyberCyan
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = CyberColors.PureWhite
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -196,14 +198,17 @@ fun WardrivingScreen(
                 },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isServiceRunning) CyberColors.AlertCrimson else CyberColors.MatrixGreen,
-                    contentColor = Color.Black
+                    containerColor = if (isServiceRunning) CyberColors.AlertCrimson else CyberColors.TacticalRed,
+                    contentColor = CyberColors.PureWhite
                 ),
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
                     text = if (isServiceRunning) "DETENER WARDRIVING" else "INICIAR WARDRIVING",
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = CyberColors.PureWhite
+                    )
                 )
             }
 
@@ -211,12 +216,18 @@ fun WardrivingScreen(
                 onClick = { refreshLiveScans() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CyberColors.SurfaceElevated,
-                    contentColor = CyberColors.CyberCyan
+                    contentColor = CyberColors.PureWhite
                 ),
                 shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.border(1.dp, CyberColors.CyberCyan, RoundedCornerShape(4.dp))
+                modifier = Modifier.border(1.dp, CyberColors.TacticalCrimson, RoundedCornerShape(4.dp))
             ) {
-                Text("REFRESCAR", style = MaterialTheme.typography.labelSmall)
+                Text(
+                    "REFRESCAR",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = CyberColors.PureWhite
+                    )
+                )
             }
         }
 
@@ -225,7 +236,7 @@ fun WardrivingScreen(
         // --- Detected Beacons List ---
         Text(
             text = "BALIZAS 802.11 DETECTADAS (${wifiBeacons.size})",
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
             color = CyberColors.TextSecondary
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -246,7 +257,7 @@ fun WifiBeaconCard(beacon: UiWifiBeacon) {
     val signalColor = when {
         beacon.rssi >= -60 -> CyberColors.MatrixGreen
         beacon.rssi >= -75 -> CyberColors.WarningAmber
-        else -> CyberColors.AlertCrimson
+        else -> CyberColors.TacticalCrimson
     }
 
     Column(
@@ -264,12 +275,12 @@ fun WifiBeaconCard(beacon: UiWifiBeacon) {
         ) {
             Text(
                 text = beacon.ssid,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = CyberColors.PureWhite
             )
             Text(
                 text = "${beacon.rssi} dBm",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = signalColor
             )
         }
@@ -281,7 +292,7 @@ fun WifiBeaconCard(beacon: UiWifiBeacon) {
             Text(
                 text = "BSSID: ${beacon.bssid}",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                color = CyberColors.CyberCyan
+                color = CyberColors.TextSecondary
             )
             Text(
                 text = "${beacon.frequency} MHz",

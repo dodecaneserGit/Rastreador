@@ -1,6 +1,7 @@
 package com.dodecaneser.rastreador.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ fun TacticalBottomNavigationBar(
         modifier = modifier
             .fillMaxWidth()
             .background(CyberColors.SurfaceDark)
+            .border(width = 1.dp, color = CyberColors.SurfaceBorder)
             .navigationBarsPadding()
             .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceAround,
@@ -46,8 +48,9 @@ fun TacticalBottomNavigationBar(
     ) {
         TacticalTab.values().forEach { tab ->
             val isSelected = tab == selectedTab
-            val backgroundColor = if (isSelected) CyberColors.SurfaceElevated else Color.Transparent
-            val textColor = if (isSelected) CyberColors.CyberCyan else CyberColors.TextMuted
+            val backgroundColor = if (isSelected) CyberColors.TacticalRed else Color.Transparent
+            val textColor = if (isSelected) CyberColors.PureWhite else CyberColors.TextSecondary
+            val badgeColor = if (isSelected) CyberColors.PureWhite else CyberColors.TacticalCrimson
 
             Box(
                 modifier = Modifier
@@ -64,8 +67,8 @@ fun TacticalBottomNavigationBar(
                     Text(
                         text = "[ ${tab.badge} ]",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 9.sp,
-                            color = if (isSelected) CyberColors.MatrixGreen else CyberColors.TextMuted
+                            fontSize = 10.sp,
+                            color = badgeColor
                         )
                     )
                     Spacer(modifier = Modifier.height(2.dp))

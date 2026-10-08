@@ -10,15 +10,15 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val TacticalDarkColorScheme = darkColorScheme(
-    primary = CyberColors.CyberCyan,
-    onPrimary = CyberColors.VoidBlack,
+    primary = CyberColors.TacticalRed,
+    onPrimary = CyberColors.PureWhite,
     primaryContainer = CyberColors.SurfaceElevated,
-    onPrimaryContainer = CyberColors.CyberCyan,
+    onPrimaryContainer = CyberColors.TacticalCrimson,
 
-    secondary = CyberColors.MatrixGreen,
-    onSecondary = CyberColors.VoidBlack,
+    secondary = CyberColors.TacticalCrimson,
+    onSecondary = CyberColors.PureWhite,
     secondaryContainer = CyberColors.SurfaceDark,
-    onSecondaryContainer = CyberColors.MatrixGreen,
+    onSecondaryContainer = CyberColors.PureWhite,
 
     tertiary = CyberColors.WarningAmber,
     onTertiary = CyberColors.VoidBlack,
@@ -33,10 +33,10 @@ private val TacticalDarkColorScheme = darkColorScheme(
     surfaceVariant = CyberColors.SurfaceElevated,
     onSurfaceVariant = CyberColors.TextSecondary,
 
-    error = CyberColors.HazardPink,
-    onError = CyberColors.VoidBlack,
+    error = CyberColors.AlertCrimson,
+    onError = CyberColors.PureWhite,
     errorContainer = CyberColors.SurfaceDark,
-    onErrorContainer = CyberColors.HazardPink,
+    onErrorContainer = CyberColors.AlertCrimson,
 
     outline = CyberColors.SurfaceBorder,
     outlineVariant = CyberColors.SurfaceBorder
