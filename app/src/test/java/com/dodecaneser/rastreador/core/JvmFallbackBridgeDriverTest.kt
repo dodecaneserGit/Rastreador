@@ -40,6 +40,32 @@ class JvmFallbackBridgeDriverTest {
     }
 
     @Test
+    fun testJvmFallbackGroundTruthMatchesTerminalAppForTargetIp() {
+        val driver = JvmFallbackBridgeDriver()
+        val rawJson = driver.queryBgpAsnJson("""{"ip": "2.139.25.3", "timeout_sec": 5}""")
+
+        val env = json.decodeFromString<BridgeEnvelope<BgpAsnResult>>(rawJson)
+        assertTrue(env.success)
+        val data = env.data
+        assertNotNull(data)
+        assertEquals("2.139.25.3", data?.ip)
+        assertEquals(3352, data?.asn)
+        assertEquals("Central Tetuán / Cuatro Caminos (Bravo Murillo)", data?.facility)
+        assertEquals(40.4535, data?.latitude ?: 0.0, 0.0001)
+        assertEquals(-3.7042, data?.longitude ?: 0.0, 0.0001)
+        assertEquals(1.2, data?.precisionKm ?: 0.0, 0.01)
+
+        // Multilateration check
+        val multilatRaw = driver.performMultilaterationJson("""{"ip": "2.139.25.3", "timeout_sec": 5}""")
+        val multilatEnv = json.decodeFromString<BridgeEnvelope<MultilaterationResult>>(multilatRaw)
+        assertTrue(multilatEnv.success)
+        val estPoint = multilatEnv.data?.estimatedPoint
+        assertNotNull(estPoint)
+        assertEquals(40.4535, estPoint?.lat ?: 0.0, 0.0001)
+        assertEquals(-3.7042, estPoint?.lon ?: 0.0, 0.0001)
+    }
+
+    @Test
     fun testJvmFallbackQueryBgpAsnInvalidIP() {
         val driver = JvmFallbackBridgeDriver()
         val rawJson = driver.queryBgpAsnJson("""{"ip": "999.999.999.999"}""")
