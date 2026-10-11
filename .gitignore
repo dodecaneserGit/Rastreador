@@ -16,3 +16,4 @@
 *.aab
 ._*
 .agents
+.kotlin
