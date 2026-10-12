@@ -19,5 +19,7 @@
         <domain includeSubdomains="false">10.0.2.2</domain>
         <!-- Secondary emulator network interface -->
         <domain includeSubdomains="false">10.0.3.2</domain>
+        <!-- IP geolocation service -->
+        <domain includeSubdomains="true">ip-api.com</domain>
     </domain-config>
 </network-security-config>

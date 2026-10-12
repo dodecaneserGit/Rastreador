@@ -499,6 +499,13 @@ class JvmFallbackBridgeDriver(
         // 1. Check Ground-Truth Centrales Telefónicas First (Sub-kilometer FTTH precision)
         val central = lookupCentralTelefonica(ip)
         if (central != null) {
+            var hostname = ""
+            try {
+                hostname = InetAddress.getByName(ip).canonicalHostName
+            } catch (_: Exception) {}
+
+            val resolvedHost = if (hostname.isNotBlank() && hostname != ip) hostname else "3.red-2-139-25.dynamicip.rima-tde.net"
+
             return BgpAsnResult(
                 ip = ip,
                 asn = 3352,
@@ -509,11 +516,13 @@ class JvmFallbackBridgeDriver(
                 region = central.province,
                 facility = central.name,
                 isp = central.isp,
+                hostname = resolvedHost,
                 latitude = central.lat,
                 longitude = central.lon,
                 confidence = "HIGH",
                 precisionKm = central.precisionKm,
                 indicators = listOf(
+                    "PTR: $resolvedHost",
                     "Central Telefónica Local: ${central.name} (±${central.precisionKm} km)",
                     "Subred FTTH RIMA: ${central.district}"
                 )

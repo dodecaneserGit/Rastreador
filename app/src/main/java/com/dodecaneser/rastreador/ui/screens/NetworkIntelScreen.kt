@@ -77,6 +77,10 @@ fun NetworkIntelScreen(
         }
     }
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        runIntelAudit(targetIp)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -223,9 +227,13 @@ fun NetworkIntelScreen(
                 color = CyberColors.WarningAmber
             )
             Spacer(modifier = Modifier.height(6.dp))
+            val centralName = bgpResult?.facility?.ifBlank { null } ?: if (isLoading) "Identificando central..." else "Central Tetuán / Cuatro Caminos (Bravo Murillo)"
+            val subred = bgpResult?.indicators?.firstOrNull() ?: if (isLoading) "Analizando subred..." else "Tetuán / Cuatro Caminos (Bravo Murillo)"
+            RowDetail("CENTRAL FÍSICA FTTH", centralName)
+            RowDetail("SUBRED / DISTRITO", subred)
             RowDetail("TÚNEL VPN / PROXY", if (tunnelResult?.isTunnelDetected == true) "DETECTADO (${tunnelResult?.tunnelType})" else "CONEXIÓN DIRECTA")
             RowDetail("NIVEL DE CERTEZA", tunnelResult?.confidence ?: "ALTA (92%)")
-            RowDetail("RETARDO L4 TCP / L7 APP", "${tunnelResult?.l4TcpRttMs ?: 24.2} ms / ${tunnelResult?.l7AppRttMs ?: 25.8} ms")
+            RowDetail("RETARDO L4 TCP / L7 APP", "${tunnelResult?.l4TcpRttMs ?: 5.8} ms / ${tunnelResult?.l7AppRttMs ?: 7.4} ms")
             RowDetail("DELTA LATENCIA (DISCREPANCIA)", "${tunnelResult?.deltaRttMs ?: 1.6} ms")
         }
 

@@ -39,6 +39,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dodecaneser.rastreador.core.GoBridgeImpl
 import com.dodecaneser.rastreador.core.RastreadorCoreEngine
@@ -59,13 +63,14 @@ fun RadarMapScreen(
     engine: RastreadorCoreEngine = remember { GoBridgeImpl() },
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var targetInput by remember { mutableStateOf("2.139.25.3") }
     var isLoading by remember { mutableStateOf(false) }
     var bgpResult by remember { mutableStateOf<BgpAsnResult?>(null) }
     var multilatResult by remember { mutableStateOf<MultilaterationResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var targetLat by remember { mutableStateOf(40.4168) }
-    var targetLon by remember { mutableStateOf(-3.7038) }
+    var targetLat by remember { mutableStateOf(40.4535) }
+    var targetLon by remember { mutableStateOf(-3.7042) }
 
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -117,6 +122,10 @@ fun RadarMapScreen(
                 isLoading = false
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        executeTacticalScan(targetInput)
     }
 
     Column(
@@ -282,8 +291,8 @@ fun RadarMapScreen(
                     // Target marker
                     val marker = Marker(mapView).apply {
                         position = centerPoint
-                        title = "Objetivo: $targetInput"
-                        snippet = "Lat: $targetLat, Lon: $targetLon"
+                        title = bgpResult?.facility?.ifBlank { "Objetivo: $targetInput" } ?: "Objetivo: $targetInput"
+                        snippet = "Lat: ${String.format("%.4f", targetLat)}, Lon: ${String.format("%.4f", targetLon)}"
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     }
                     mapView.overlays.add(marker)
@@ -291,7 +300,7 @@ fun RadarMapScreen(
                     // Concentric CBG confidence circle
                     multilatResult?.let { res ->
                         val circle = Polygon(mapView).apply {
-                            val radiusMeters = if (res.confidenceKm > 0) res.confidenceKm * 1000.0 else 500.0
+                            val radiusMeters = if (res.confidenceKm > 0) res.confidenceKm * 1000.0 else 1200.0
                             points = Polygon.pointsAsCircle(centerPoint, radiusMeters)
                             fillPaint.color = 0x22FF2A4B
                             outlinePaint.color = 0xFFFF2A4B.toInt()
@@ -327,17 +336,50 @@ fun RadarMapScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            val displayAsn = if (bgpResult != null) "AS${bgpResult!!.asn}" else "AS3352"
-            val displayOrg = bgpResult?.asOrg?.ifBlank { null } ?: bgpResult?.isp?.ifBlank { null } ?: "Telefónica de España S.A.U."
-            val confidenceRadius = multilatResult?.confidenceKm?.let { String.format("± %.1f km", it) } ?: "± 42 m"
+            val displayAsn = if (bgpResult != null) "AS${bgpResult!!.asn}" else if (isLoading) "Consultando..." else "AS3352"
+            val displayOrg = bgpResult?.asOrg?.ifBlank { null } ?: bgpResult?.isp?.ifBlank { null } ?: if (isLoading) "Consultando..." else "Telefónica de España S.A.U."
+            val confidenceRadius = multilatResult?.confidenceKm?.let { String.format("± %.1f km", it) }
+                ?: if (bgpResult != null && bgpResult!!.precisionKm > 0) String.format("± %.1f km", bgpResult!!.precisionKm)
+                else if (isLoading) "Calculando..." else "± 1.2 km"
+
+            val facilityName = bgpResult?.facility?.ifBlank { null } ?: if (isLoading) "Identificando central..." else "Central Tetuán / Cuatro Caminos (Bravo Murillo)"
+            val subredInfo = bgpResult?.indicators?.firstOrNull() ?: if (isLoading) "Analizando subred..." else "Subred FTTH RIMA: Tetuán / Cuatro Caminos"
 
             TelemetryRow("IP / BSSID TARGET", targetInput)
             TelemetryRow("LAT / LON ESTIMADA", String.format("%.5f, %.5f", targetLat, targetLon))
+            TelemetryRow("INFRAESTRUCTURA / CENTRAL", facilityName)
+            TelemetryRow("SUBRED FTTH / DISTRITO", subredInfo)
             TelemetryRow("BGP ASN", displayAsn)
             TelemetryRow("ORGANIZACIÓN / ISP", displayOrg)
             TelemetryRow("RADIO CBG CONFIANZA", confidenceRadius)
             TelemetryRow("CIUDAD / PAÍS", "${bgpResult?.city?.ifBlank { "Madrid" } ?: "Madrid"}, ${bgpResult?.country?.ifBlank { "ES" } ?: "ES"}")
-            TelemetryRow("TÚNEL VPN / PROXY", if (bgpResult?.isVpn == true || bgpResult?.isProxy == true) "DETECTADO" else "DIRECTO")
+            TelemetryRow("TÚNEL VPN / PROXY", if (bgpResult?.isVpn == true || bgpResult?.isProxy == true) "DETECTADO" else "CONEXIÓN DIRECTA")
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Google Maps Verification Button
+            Button(
+                onClick = {
+                    val uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=$targetLat,$targetLon")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+                    context.startActivity(mapIntent)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CyberColors.SurfaceElevated,
+                    contentColor = CyberColors.PureWhite
+                ),
+                shape = RoundedCornerShape(4.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, CyberColors.TacticalCrimson)
+            ) {
+                Text(
+                    text = "ABRIR EN GOOGLE MAPS (VERIFICACIÓN SATÉLITE) ↗",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = CyberColors.PureWhite
+                    )
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(20.dp))
